@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+/* index.css */
+:root {
+  --primary-color: #0B1D3A;
+}
+
+body {
+  margin: 0;
+  background-color: #0B1D3A;
+  /* Matches your THEME.colors.primary */
+  color: white;
+}
