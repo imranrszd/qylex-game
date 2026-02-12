@@ -14,7 +14,7 @@ const AdminLogin = ({ onSuccess }) => {
       // Check if onSuccess exists before calling it
       if (typeof onSuccess === 'function') {
         onSuccess();
-        navigate('/admin/dashboard');
+        navigate('/admin/dashboard/overview');
       } else {
         console.error("onSuccess prop was not passed to AdminLogin!");
       }
