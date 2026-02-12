@@ -497,9 +497,7 @@ export default function App() {
         <Route path="/track" element={<TrackOrderView />} />
 
         {/* CHECKOUT */}
-        <Route path="/checkout/:gameId" element={
-          user ? <CheckoutView /> : <Navigate to="/login" replace />
-        } />
+        <Route path="/checkout/:gameId" element={<CheckoutView />} />
 
         {/* ADMIN */}
         <Route path="/admin/*" element={<AdminLogin onSuccess={() => setIsAdminAuthenticated(true)} />} />
