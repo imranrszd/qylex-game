@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Menu, X, Lock } from 'lucide-react';
+import { Menu, X, Lock, LogOut } from 'lucide-react';
 import { useNavigate, Link, NavLink } from "react-router-dom";
 import qylexLogo from '../assets/qylex-logo.png';
 
-export default function Navbar({ onViewChange, currentView }) {
+export default function Navbar({ user, onLogout }) {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -47,13 +47,32 @@ export default function Navbar({ onViewChange, currentView }) {
             </div>
           </div>
           <div className="hidden md:flex items-center gap-4">
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Lock className="w-3 h-3" /> Admin
-            </Link>
+            {user ? (
+              <div className="flex items-center gap-4">
+                <span className="text-white text-sm">Hi, {user.name}</span>
+
+                {/* 1. ONLY SHOW ADMIN BUTTON IF ROLE IS ADMIN */}
+                {user.role === 'ADMIN' && (
+                  <Link
+                    to="/admin/dashboard"
+                    className="bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all flex items-center gap-2"
+                  >
+                    <Lock className="w-3 h-3" /> Admin
+                  </Link>
+                )}
+
+                <button onClick={onLogout} className="text-slate-400 hover:text-white flex items-center gap-1 text-sm">
+                  <LogOut className="w-5 h-5" /> Logout
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-cyan-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-cyan-500 transition-all"
+              >
+                Login
+              </button>
+            )}
           </div>
           <div className="-mr-2 flex md:hidden">
             <button onClick={() => setIsOpen(!isOpen)} className="text-slate-400 hover:text-white p-2">
@@ -81,13 +100,21 @@ export default function Navbar({ onViewChange, currentView }) {
               Track Order
             </Link>
 
-            <Link
-              to="/admin"
-              onClick={() => setIsOpen(false)}
-              className="text-slate-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
-            >
-              Admin Login
-            </Link>
+            {user?.role === 'ADMIN' && (
+              <Link
+                to="/admin/dashboard"
+                onClick={() => setIsOpen(false)}
+                className="text-cyan-400 block px-3 py-2 font-bold"
+              >
+                Admin Dashboard
+              </Link>
+            )}
+
+            {user ? (
+              <button onClick={onLogout} className="text-red-400 block px-3 py-2">Logout</button>
+            ) : (
+              <Link to="/login" onClick={() => setIsOpen(false)} className="text-white block px-3 py-2">Login</Link>
+            )}
           </div>
         </div>
       )}

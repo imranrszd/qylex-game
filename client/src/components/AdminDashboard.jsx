@@ -47,7 +47,7 @@ const DashboardTab = () => (
       <div className="h-48 flex items-end justify-between gap-2">
         {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
           <div key={i} className="w-full bg-slate-800 rounded-t-lg relative group">
-            <div className="absolute bottom-0 w-full bg-gradient-to-t from-blue-600 to-cyan-400 rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }}></div>
+            <div className="absolute bottom-0 w-full bg-linear-to-t from-blue-600 to-cyan-400 rounded-t-lg transition-all duration-500" style={{ height: `${h}%` }}></div>
           </div>
         ))}
       </div>
@@ -57,11 +57,11 @@ const DashboardTab = () => (
 
 const StrategyTab = () => (
   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-    <div className="bg-gradient-to-r from-slate-900 to-[#1F2937] rounded-3xl p-8 border border-slate-700 relative overflow-hidden">
+    <div className="bg-linear-to-r from-slate-900 to-[#1F2937] rounded-3xl p-8 border border-slate-700 relative overflow-hidden">
       <h2 className="text-white text-2xl font-bold mb-1 flex items-center gap-2"><Target className="w-6 h-6 text-red-500" /> Road to RM 10k Net Profit</h2>
       <p className="text-4xl font-bold text-emerald-400 mt-4">RM {currentNetProfit.toLocaleString()}</p>
       <div className="h-4 bg-slate-800 rounded-full mt-6 overflow-hidden">
-        <div className="h-full bg-gradient-to-r from-blue-600 to-emerald-500" style={{ width: `${profitProgress}%` }}></div>
+        <div className="h-full bg-linear-to-r from-blue-600 to-emerald-500" style={{ width: `${profitProgress}%` }}></div>
       </div>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -39,3 +39,22 @@ export const REVIEWS_DATA = [
   { id: 7, user: "Aiman_X", text: "Servis laju, admin reply WhatsApp pun cepat. Terbaik Qylex!", rating: 5, date: "4 hours ago", tag: "MLBB (Via Login)" },
   { id: 8, user: "Nurul Izzah", text: "Senang je nak topup, tak payah pening2. Masuk ID terus dapat.", rating: 5, date: "Yesterday", tag: "Genshin Impact" },
 ];
+
+export const MOCK_USERS = [
+  {
+    id: 1,
+    username: 'admin',
+    pin: '1234',
+    role: 'ADMIN',
+    name: 'Q',
+    redirect: '/admin/dashboard/overview'
+  },
+  {
+    id: 2,
+    username: 'cust',
+    pin: '0000',
+    role: 'CUSTOMER',
+    name: 'John',
+    redirect: '/'
+  }
+];

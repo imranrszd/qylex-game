@@ -45,6 +45,7 @@ import Footer from './layout/footer';
 import TrackOrderView from './components/TrackOrderView';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
+import LoginPage from './components/login';
 
 // --- Configuration & Data ---
 
@@ -234,7 +235,7 @@ const CheckoutView = () => {
                 {/* Login Method for MLBB */}
                 {(isMLBBLogin || isJoki) && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Login Method</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Login Method</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['Moonton', 'TikTok', 'Facebook'].map(method => (
                         <button key={method} onClick={() => setLoginMethod(method)} className={`py-2 rounded-lg text-sm font-medium border transition-all ${loginMethod === method ? 'bg-purple-900/40 border-purple-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'}`}>{method}</button>
@@ -246,32 +247,32 @@ const CheckoutView = () => {
                 {/* Nickname for MLBB Login */}
                 {isMLBBLogin && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">In-Game Nickname</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">In-Game Nickname</label>
                     <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Your Name" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isRoblox ? "RobloxUser123" : "example@email.com"} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Password</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Password</label>
                     <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 </div>
 
                 {isRoblox && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Backup Code (Required)</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Backup Code (Required)</label>
                     <input type="text" value={backupCode} onChange={(e) => setBackupCode(e.target.value)} placeholder="123456" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                     <p className="text-[10px] text-slate-500 mt-1">Get this from Roblox Settings {'>'} Security {'>'} Backup Codes.</p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Phone Number (WhatsApp)</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Phone Number (WhatsApp)</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="012-3456789" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                 </div>
 
@@ -414,6 +415,23 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
 
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('qylex_user');
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  // 1. Create the Logout function
+  const handleLogout = () => {
+    localStorage.removeItem('qylex_user'); // Clear storage
+    setUser(null); // Clear state
+    navigate('/login'); // Redirect to login
+  };
+
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem('qylex_user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const navigate = useNavigate();
   const filteredGames = GAMES.filter(game => {
     if (activeCategory === 'all') return true;
@@ -422,7 +440,7 @@ export default function App() {
 
   return (
     <div className="bg-[#0B1D3A] min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      <Navbar />
+      <Navbar user={user} onLogout={handleLogout} />
       {/* {view === 'home' ? ( */}
       <Routes>
         {/* HOME */}
@@ -473,11 +491,15 @@ export default function App() {
           </>
         } />
 
+        <Route path="/login" element={<LoginPage onLogin={handleLoginSuccess} />} />
+
         {/* TRACK */}
         <Route path="/track" element={<TrackOrderView />} />
 
         {/* CHECKOUT */}
-        <Route path="/checkout/:gameId" element={<CheckoutView />} />
+        <Route path="/checkout/:gameId" element={
+          user ? <CheckoutView /> : <Navigate to="/login" replace />
+        } />
 
         {/* ADMIN */}
         <Route path="/admin/*" element={<AdminLogin onSuccess={() => setIsAdminAuthenticated(true)} />} />
