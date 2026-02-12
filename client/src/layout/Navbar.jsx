@@ -29,7 +29,7 @@ export default function Navbar({ onViewChange, currentView }) {
           <div className="hidden md:flex items-center gap-4">
             <button
               onClick={() => onViewChange('admin_login')}
-              disabled
+              
               className="bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Lock className="w-3 h-3" /> Admin
