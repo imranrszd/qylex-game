@@ -87,7 +87,7 @@ router.post("/orders/:orderId/payment-proof", upload.single("proof"), async (req
         // Mark payment pending verification + attach proof
         const payUp = await pool.query(
         `UPDATE payments
-        SET status='PENDING_PAYMENT', proof_url=$2, payer_name=$3, reference_no=$4
+        SET status='PENDING', proof_url=$2, payer_name=$3, reference_no=$4
         WHERE order_id=$1
         RETURNING payment_id, status, proof_url`,
         [orderId, proofUrl, payerName || null, referenceNo || null]

@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Search,
   Zap,
@@ -1017,6 +1017,28 @@ export default function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [selectedGame, setSelectedGame] = useState(null);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [games, setGames] = useState([]); // <-- NEW: from DB
+  const [loadingGames, setLoadingGames] = useState(true);
+  const [gamesError, setGamesError] = useState(null);
+
+  const fetchProducts = async () => {
+    try {
+      setLoadingGames(true);
+      setGamesError(null);
+      const res = await fetch("http://localhost:5000/api/products");
+      if (!res.ok) throw new Error(`Failed to load products (${res.status})`);
+      const data = await res.json();
+      setGames(data);
+    } catch (e) {
+      setGamesError(e.message);
+    } finally {
+      setLoadingGames(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
 
   const handleGameClick = (game) => {
     setSelectedGame(game);
@@ -1024,7 +1046,7 @@ export default function App() {
     window.scrollTo(0, 0);
   };
 
-  const filteredGames = GAMES.filter(game => {
+  const filteredGames = games.filter(game => {
     if (activeCategory === 'all') return true;
     return game.platform === activeCategory || (activeCategory === 'mobile' && game.category !== 'Service' && game.platform !== 'pc');
   });
@@ -1045,9 +1067,21 @@ export default function App() {
               <div className="flex items-end justify-between mb-8">
                 <div><h2 className="text-3xl font-bold text-white flex items-center gap-2"><Flame className="text-orange-500 fill-orange-500" /> Popular Now</h2><p className="text-slate-400 mt-2">Top selling games in Malaysia this week.</p></div>
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-                {filteredGames.map((game) => (<GameCard key={game.id} game={game} onClick={() => handleGameClick(game)} />))}
-              </div>
+              {loadingGames ? (
+                  <div className="text-slate-400">Loading games...</div>
+                ) : gamesError ? (
+                  <div className="text-red-400">Failed to load games: {gamesError}</div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+                    {filteredGames.map((game) => (
+                      <GameCard
+                        key={game.product_id || game.id}
+                        game={game}
+                        onClick={() => handleGameClick(game)}
+                      />
+                    ))}
+                  </div>
+                )}
             </div>
             {/* Promo Banner */}
             <div className="relative rounded-3xl overflow-hidden bg-linear-to-r from-blue-900 to-[#0B1D3A] border border-blue-800 mb-20">
@@ -1082,8 +1116,15 @@ export default function App() {
       ) : view === 'admin_login' ? (
         <AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); setView('admin'); }} onBack={() => setView('home')} />
       ) : view === 'admin' ? (
-        isAdminAuthenticated ? <AdminDashboard onBack={() => { setIsAdminAuthenticated(false); setView('home'); }} /> : <AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); setView('admin'); }} onBack={() => setView('home')} />
-      ) : (
+        isAdminAuthenticated ? (
+  <AdminDashboard
+    onBack={() => { setIsAdminAuthenticated(false); setView('home'); }}
+    onProductChanged={fetchProducts}   // ✅ NEW
+    products={games}                   // ✅ NEW (optional)
+  />
+) : (
+  <AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); setView('admin'); }} onBack={() => setView('home')} />
+      ) ): (
         <CheckoutView game={selectedGame} onBack={() => setView('home')} />
       )}
 
