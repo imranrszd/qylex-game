@@ -1,50 +1,21 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
-  Search,
   Zap,
   ShieldCheck,
   Headphones,
   CreditCard,
   ChevronRight,
-  Smartphone,
   CheckCircle2,
   Trophy,
   Flame,
   Star,
   Sword,
   Lock,
-  Plus,
   AlertTriangle,
-  Monitor,
-  Gamepad2,
-  Ticket,
   ArrowRight,
-  Package,
-  Key,
-  Users,
   ThumbsUp,
-  ShoppingBag,
-  LayoutDashboard,
-  Settings,
-  LogOut,
-  MoreHorizontal,
-  TrendingUp,
-  Activity,
-  Filter,
-  Download,
-  Edit,
-  Trash2,
-  Save,
-  Target,
-  Lightbulb,
-  ArrowUpRight
 } from 'lucide-react';
-
-import mlbbImg from './assets/mlbb-logo.png';
-import robloxImg from './assets/roblox-logo.jpg';
-import valorantImg from './assets/valorant-logo.jpg';
-import genshinImg from './assets/genshin-logo.png';
-import pubgImg from './assets/pubgmobile-logo.jpg';
+import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom";
 
 import {
   PACKAGES_MLBB,
@@ -54,15 +25,14 @@ import {
 } from './data/Packages';
 
 import {
-  ADMIN_STATS,
-  ADMIN_ORDERS,
-  ADMIN_CUSTOMERS,
+  GAMES,
+  PAYMENTS,
+  CATEGORIES,
+} from './data/Others';
+
+import {
   REVIEWS_DATA,
 } from './data/MockData';
-
-import tng from './assets/tng-logo.png';
-import grabpay from './assets/grabpay-logo.png';
-import fpx from './assets/fpx-logo.png';
 
 import PromoCarousel from './components/PromoCarousel';
 import WhyQylexSection from './content/WhyQylexSelection';
@@ -73,7 +43,9 @@ import GameCard from './components/GameCard';
 import Navbar from './layout/Navbar';
 import Footer from './layout/footer';
 import TrackOrderView from './components/TrackOrderView';
-
+import AdminDashboard from './components/AdminDashboard';
+import AdminLogin from './components/AdminLogin';
+import LoginPage from './components/login';
 
 // --- Configuration & Data ---
 
@@ -88,56 +60,6 @@ const THEME = {
   }
 };
 
-const SITE_CONFIG = {
-  whatsapp: "60198313202", // Q Store Number
-  adminPin: "1234" // Simple PIN for MVP Protection
-};
-
-// TYPES: 'topup' (ID only), 'joki' (Rank Calc), 'login' (Account Credentials)
-const GAMES = [
-  { id: 1, name: "Mobile Legends", publisher: "Moonton", category: "MOBA", type: "topup", platform: "mobile", image: mlbbImg, icon: "⚔️" },
-  { id: 100, name: "MLBB (Via Login)", publisher: "Moonton", category: "MOBA", type: "login", platform: "mobile", image: mlbbImg, icon: "🔑" },
-  { id: 101, name: "Roblox", publisher: "Roblox Corp", category: "Sandbox", type: "login", platform: "mobile", image: robloxImg, icon: "🟥" },
-  { id: 99, name: "MLBB Rank Boost", publisher: "Qylex Pro Team", category: "Service", type: "joki", platform: "service", image: mlbbImg, icon: "🚀" },
-  { id: 2, name: "PUBG Mobile", publisher: "Tencent", category: "Battle Royale", type: "topup", platform: "mobile", image: pubgImg, icon: "🔫" },
-  { id: 3, name: "Valorant", publisher: "Riot Games", category: "FPS", type: "topup", platform: "pc", image: valorantImg, icon: "🎯" },
-  { id: 4, name: "Genshin Impact", publisher: "HoYoverse", category: "RPG", type: "topup", platform: "mobile", image: genshinImg, icon: "✨" },
-];
-
-
-// --- Helpers ---
-const CrownIcon = Trophy; // Fallback
-
-const STRATEGY_INSIGHTS = [
-  {
-    title: "High Margin Opportunity",
-    desc: "Joki Services have a 90% profit margin but only make up 5% of total orders.",
-    action: "Add a 'Joki' popup on the MLBB Diamond checkout page.",
-    impact: "Potential +RM 1,200/mo",
-    icon: Sword,
-    color: "text-purple-400",
-    bg: "bg-purple-500/10"
-  },
-  {
-    title: "Reseller Dormancy",
-    desc: "12 Resellers haven't purchased stock in the last 7 days.",
-    action: "Send an automated WhatsApp broadcast with a 2% discount code.",
-    impact: "Recover ~RM 800 Revenue",
-    icon: Users,
-    color: "text-orange-400",
-    bg: "bg-orange-500/10"
-  },
-  {
-    title: "Whale Retention",
-    desc: "Top 5 customers contribute 25% of total profit.",
-    action: "Assign a dedicated support agent to these 5 VIPs.",
-    impact: "Secure RM 3,000/mo Recurring",
-    icon: CrownIcon,
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/10"
-  }
-];
-
 // --- JOKI LOGIC ENGINE ---
 const RANK_CONF = {
   'Grandmaster': { starsPerTier: 5, price: 3.50, tiers: ['V', 'IV', 'III', 'II', 'I'] },
@@ -146,540 +68,6 @@ const RANK_CONF = {
   'Mythic': { starsPerTier: 25, price: 10.00, tiers: ['Grading', 'Honor', 'Glory'] }
 };
 const RANK_ORDER = ['Grandmaster', 'Epic', 'Legend', 'Mythic'];
-
-const PAYMENTS = [
-  { id: 'tng', name: "Touch 'n Go", type: "E-Wallet", fee: "0%", logo: tng, icon: "🔵" },
-  { id: 'grab', name: "GrabPay", type: "E-Wallet", fee: "0%", logo: grabpay, icon: "🟢" },
-  { id: 'fpx', name: "FPX Banking", type: "Direct Debit", fee: "RM 1.00", logo: fpx, icon: "🏦" },
-];
-
-const CATEGORIES = [
-  { id: 'all', label: 'All Games', icon: Gamepad2 },
-  { id: 'mobile', label: 'Mobile Games', icon: Smartphone },
-  { id: 'pc', label: 'PC Games', icon: Monitor },
-  { id: 'vouchers', label: 'Vouchers', icon: Ticket },
-  { id: 'service', label: 'Services', icon: Sword },
-];
-
-
-// --- ADMIN LOGIN GATE ---
-const AdminLogin = ({ onSuccess, onBack }) => {
-  const [pin, setPin] = useState('');
-  const [error, setError] = useState(false);
-
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (pin === SITE_CONFIG.adminPin) {
-      onSuccess();
-    } else {
-      setError(true);
-      setPin('');
-    }
-  };
-
-  return (
-    <div className="min-h-screen pt-32 pb-20 flex items-center justify-center px-4">
-      <div className="bg-[#1F2937] p-8 rounded-3xl border border-slate-700 shadow-2xl max-w-sm w-full text-center">
-        <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
-          <Lock className="w-8 h-8" />
-        </div>
-        <h2 className="text-2xl font-bold text-white mb-2">Admin Access</h2>
-        <p className="text-slate-400 mb-6 text-sm">Enter security PIN to continue.</p>
-
-        <form onSubmit={handleLogin} className="space-y-4">
-          <input
-            type="password"
-            value={pin}
-            onChange={(e) => { setPin(e.target.value); setError(false); }}
-            placeholder="Enter PIN"
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-center text-white tracking-widest text-lg focus:outline-none focus:border-cyan-500"
-            maxLength={4}
-          />
-          {error && <p className="text-red-400 text-xs animate-pulse">Invalid PIN code</p>}
-          <button type="submit" className="w-full py-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl font-bold transition-all">Unlock Dashboard</button>
-          <button type="button" onClick={onBack} className="text-slate-500 text-sm hover:text-white">Return Home</button>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// --- ADMIN DASHBOARD COMPONENT ---
-const AdminDashboard = ({ onBack }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-  // --- STRATEGY CALCULATIONS ---
-  const operationalCost = 350; // RM 350/mo
-  const targetProfit = 10000; // RM 10k/mo
-
-  // Dummy Calculation for Strategy Tab
-  const currentRevenue = 12450;
-  const estimatedMargin = 0.12; // 12% avg margin
-  const currentGrossProfit = currentRevenue * estimatedMargin; // ~RM 1,494
-  const currentNetProfit = currentGrossProfit - operationalCost; // ~RM 1,144
-
-  const profitProgress = Math.min((currentNetProfit / targetProfit) * 100, 100);
-  const profitGap = targetProfit - currentNetProfit;
-
-  return (
-    <div className="min-h-screen bg-[#0B1D3A] pt-24 pb-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        <div className="flex flex-col md:flex-row gap-8">
-
-          {/* SIDEBAR */}
-          <div className="w-full md:w-64 shrink-0">
-            <div className="bg-[#1F2937] rounded-2xl border border-slate-700 p-4 sticky top-24">
-              <div className="flex items-center gap-3 mb-8 px-2">
-                <div className="w-10 h-10 bg-cyan-500/20 rounded-xl flex items-center justify-center text-cyan-400">
-                  <LayoutDashboard className="w-6 h-6" />
-                </div>
-                <div>
-                  <h2 className="text-white font-bold">Qylex Admin</h2>
-                  <p className="text-xs text-slate-400">v1.0.0 (Beta)</p>
-                </div>
-              </div>
-
-              <nav className="space-y-1">
-                {[
-                  { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-                  { id: 'strategy', label: 'Strategy & Growth', icon: TrendingUp },
-                  { id: 'orders', label: 'Orders', icon: ShoppingBag },
-                  { id: 'products', label: 'Products', icon: Package },
-                  { id: 'customers', label: 'Customers', icon: Users },
-                  { id: 'settings', label: 'Settings', icon: Settings },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
-                  >
-                    <item.icon className="w-5 h-5" />
-                    {item.label}
-                  </button>
-                ))}
-              </nav>
-
-              <div className="mt-8 pt-8 border-t border-slate-700">
-                <button onClick={onBack} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all">
-                  <LogOut className="w-5 h-5" />
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* MAIN CONTENT */}
-          <div className="flex-1">
-
-            {/* Header */}
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="text-2xl font-bold text-white capitalize">{activeTab.replace('strategy', 'Strategy & Growth')} Overview</h1>
-              <div className="flex gap-3">
-                <button className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
-                  <Download className="w-4 h-4" /> Export Report
-                </button>
-                {activeTab === 'products' && (
-                  <button className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-cyan-500 flex items-center gap-2">
-                    <Plus className="w-4 h-4" /> Add Product
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* STRATEGY TAB (New) */}
-            {activeTab === 'strategy' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-
-                {/* 1. Road to 10k Card */}
-                <div className="bg-gradient-to-r from-slate-900 to-[#1F2937] rounded-3xl p-8 border border-slate-700 relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
-
-                  <div className="flex flex-col md:flex-row justify-between items-end mb-6 relative z-10">
-                    <div>
-                      <h2 className="text-white text-2xl font-bold mb-1 flex items-center gap-2">
-                        <Target className="w-6 h-6 text-red-500" /> Road to RM 10k Net Profit
-                      </h2>
-                      <p className="text-slate-400">Monthly Operational Cost: <span className="text-red-400 font-mono">RM {operationalCost}</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-slate-400 text-sm mb-1">Current Net Profit</p>
-                      <p className="text-4xl font-bold text-emerald-400 font-mono">RM {currentNetProfit.toLocaleString()}</p>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="relative z-10">
-                    <div className="flex justify-between text-xs text-slate-400 mb-2">
-                      <span>RM 0</span>
-                      <span>Target: RM 10,000</span>
-                    </div>
-                    <div className="h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
-                      <div
-                        className="h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-1000"
-                        style={{ width: `${profitProgress}%` }}
-                      ></div>
-                    </div>
-                    <div className="mt-4 flex gap-4 text-sm">
-                      <div className="px-3 py-1 bg-red-500/10 text-red-400 rounded-lg border border-red-500/20">
-                        Gap: RM {profitGap.toLocaleString()}
-                      </div>
-                      <div className="px-3 py-1 bg-blue-500/10 text-blue-400 rounded-lg border border-blue-500/20">
-                        {profitProgress.toFixed(1)}% Achieved
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* 2. Strategic Insights Cards */}
-                <div>
-                  <h3 className="text-white font-bold text-lg mb-4 flex items-center gap-2"><Lightbulb className="w-5 h-5 text-yellow-400" /> AI Strategic Recommendations</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {STRATEGY_INSIGHTS.map((insight, idx) => (
-                      <div key={idx} className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700 hover:border-slate-500 transition-all group">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className={`p-3 rounded-xl ${insight.bg} ${insight.color}`}>
-                            <insight.icon className="w-6 h-6" />
-                          </div>
-                          <button className="text-slate-500 hover:text-white"><ArrowUpRight className="w-5 h-5" /></button>
-                        </div>
-                        <h4 className="text-white font-bold mb-2">{insight.title}</h4>
-                        <p className="text-slate-400 text-sm mb-4 min-h-[40px]">{insight.desc}</p>
-                        <div className="bg-slate-800/50 p-3 rounded-lg border border-slate-700/50">
-                          <p className="text-xs text-slate-500 uppercase font-bold mb-1">Recommended Action:</p>
-                          <p className="text-emerald-400 text-xs font-semibold">{insight.action}</p>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                          <span className="text-xs text-slate-500">Est. Impact</span>
-                          <span className="text-xs font-bold text-white bg-emerald-500/20 px-2 py-1 rounded">{insight.impact}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 3. Data Reframing (Profit vs Volume) */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                  <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-white font-bold mb-6 flex items-center gap-2"><Activity className="w-5 h-5 text-blue-400" /> Profit Generators (Margin Analysis)</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-purple-500/20 flex items-center justify-center text-purple-400"><Sword className="w-4 h-4" /></div>
-                          <div>
-                            <p className="text-white text-sm font-bold">Joki Services</p>
-                            <p className="text-xs text-slate-500">Margin: <span className="text-emerald-400">40%</span></p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white font-bold">RM 4,500</p>
-                          <p className="text-xs text-slate-500">Profit Contrib.</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between p-3 bg-slate-900/50 rounded-xl border border-slate-700/50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center text-blue-400"><Zap className="w-4 h-4" /></div>
-                          <div>
-                            <p className="text-white text-sm font-bold">Small Packs (diamonds)</p>
-                            <p className="text-xs text-slate-500">Margin: <span className="text-orange-400">5%</span></p>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-white font-bold">RM 800</p>
-                          <p className="text-xs text-slate-500">Profit Contrib.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-white font-bold mb-6 flex items-center gap-2"><Activity className="w-5 h-5 text-emerald-400" /> Operational Health</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-800 p-4 rounded-xl text-center">
-                        <p className="text-slate-400 text-xs mb-1">Cost Efficiency</p>
-                        <p className="text-2xl font-bold text-white">92%</p>
-                        <span className="text-[10px] text-emerald-400">Excellent</span>
-                      </div>
-                      <div className="bg-slate-800 p-4 rounded-xl text-center">
-                        <p className="text-slate-400 text-xs mb-1">Daily Profit Need</p>
-                        <p className="text-2xl font-bold text-white">RM 333</p>
-                        <span className="text-[10px] text-slate-500">To hit RM10k</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* DASHBOARD TAB */}
-            {activeTab === 'dashboard' && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {ADMIN_STATS.map((stat, idx) => (
-                    <div key={idx} className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700 hover:border-slate-600 transition-all">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className={`p-3 rounded-xl ${stat.bg} ${stat.color}`}>
-                          <stat.icon className="w-6 h-6" />
-                        </div>
-                        <span className="text-xs font-bold bg-slate-800 text-slate-300 px-2 py-1 rounded-full">{stat.change}</span>
-                      </div>
-                      <h3 className="text-2xl font-bold text-white">{stat.value}</h3>
-                      <p className="text-sm text-slate-400">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Revenue Chart (Mock) */}
-                <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-bold text-white flex items-center gap-2"><TrendingUp className="w-5 h-5 text-cyan-400" /> Revenue Trend</h3>
-                    <select className="bg-slate-900 text-white text-xs border border-slate-700 rounded px-2 py-1">
-                      <option>Last 7 Days</option>
-                      <option>Last 30 Days</option>
-                    </select>
-                  </div>
-                  <div className="h-48 flex items-end justify-between gap-2">
-                    {[40, 65, 45, 80, 55, 90, 75].map((h, i) => (
-                      <div key={i} className="w-full bg-slate-800 rounded-t-lg relative group">
-                        <div className="absolute bottom-0 w-full bg-gradient-to-t from-blue-600 to-cyan-400 rounded-t-lg transition-all duration-500 hover:opacity-80" style={{ height: `${h}%` }}></div>
-                        <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded transition-opacity">RM {h * 100}</div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="flex justify-between mt-2 text-xs text-slate-500">
-                    <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-                  </div>
-                </div>
-
-                {/* Recent Orders Table */}
-                <div className="bg-[#1F2937] rounded-2xl border border-slate-700 overflow-hidden">
-                  <div className="p-6 border-b border-slate-700 flex justify-between items-center">
-                    <h3 className="text-lg font-bold text-white">Recent Transactions</h3>
-                    <button onClick={() => setActiveTab('orders')} className="text-cyan-400 text-sm hover:underline">View All</button>
-                  </div>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-400">
-                      <thead className="text-xs text-slate-300 uppercase bg-slate-800">
-                        <tr>
-                          <th className="px-6 py-3">Order ID</th>
-                          <th className="px-6 py-3">User</th>
-                          <th className="px-6 py-3">Item</th>
-                          <th className="px-6 py-3">Price</th>
-                          <th className="px-6 py-3">Status</th>
-                          <th className="px-6 py-3">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {ADMIN_ORDERS.slice(0, 5).map((order, idx) => (
-                          <tr key={idx} className="border-b border-slate-700 hover:bg-slate-800/50">
-                            <td className="px-6 py-4 font-mono font-medium text-white">{order.id}</td>
-                            <td className="px-6 py-4">{order.user}</td>
-                            <td className="px-6 py-4">{order.item}</td>
-                            <td className="px-6 py-4 text-white font-bold">{order.price}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded text-xs font-bold ${order.status === 'Success' ? 'bg-emerald-500/10 text-emerald-400' :
-                                order.status === 'Processing' ? 'bg-blue-500/10 text-blue-400' :
-                                  'bg-orange-500/10 text-orange-400'
-                                }`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <button className="text-slate-400 hover:text-white"><MoreHorizontal className="w-5 h-5" /></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ORDERS TAB */}
-            {activeTab === 'orders' && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
-                <div className="flex gap-4">
-                  <div className="relative flex-1">
-                    <input type="text" placeholder="Search Order ID, User..." className="w-full bg-[#1F2937] border border-slate-700 rounded-xl px-4 py-3 pl-11 text-white focus:outline-none focus:border-cyan-500" />
-                    <Search className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
-                  </div>
-                  <button className="bg-[#1F2937] border border-slate-700 text-slate-300 px-4 py-3 rounded-xl flex items-center gap-2 hover:bg-slate-800"><Filter className="w-5 h-5" /> Filter</button>
-                </div>
-
-                <div className="bg-[#1F2937] rounded-2xl border border-slate-700 overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-400">
-                      <thead className="text-xs text-slate-300 uppercase bg-slate-800">
-                        <tr>
-                          <th className="px-6 py-3">Order ID</th>
-                          <th className="px-6 py-3">User</th>
-                          <th className="px-6 py-3">Item</th>
-                          <th className="px-6 py-3">Method</th>
-                          <th className="px-6 py-3">Price</th>
-                          <th className="px-6 py-3">Status</th>
-                          <th className="px-6 py-3">Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {[...ADMIN_ORDERS, ...ADMIN_ORDERS].map((order, idx) => ( // Duplicate for length
-                          <tr key={idx} className="border-b border-slate-700 hover:bg-slate-800/50">
-                            <td className="px-6 py-4 font-mono font-medium text-white">{order.id}</td>
-                            <td className="px-6 py-4">{order.user}</td>
-                            <td className="px-6 py-4">{order.item}</td>
-                            <td className="px-6 py-4 text-xs font-mono">{order.method}</td>
-                            <td className="px-6 py-4 text-white font-bold">{order.price}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-2 py-1 rounded text-xs font-bold ${order.status === 'Success' ? 'bg-emerald-500/10 text-emerald-400' :
-                                order.status === 'Processing' ? 'bg-blue-500/10 text-blue-400' :
-                                  'bg-orange-500/10 text-orange-400'
-                                }`}>
-                                {order.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 flex gap-2">
-                              <button className="text-blue-400 hover:text-blue-300"><Edit className="w-4 h-4" /></button>
-                              <button className="text-red-400 hover:text-red-300"><Trash2 className="w-4 h-4" /></button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-
-
-            {/* PRODUCTS TAB */}
-            {activeTab === 'products' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-                {GAMES.map((game) => (
-                  <div key={game.id} className="bg-[#1F2937] rounded-2xl border border-slate-700 overflow-hidden hover:border-cyan-500/50 transition-all">
-                    <div className="h-32 bg-cover bg-center relative" style={{ backgroundImage: `url(${game.image})` }}>
-
-                      <div className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg text-white backdrop-blur-md">
-                        <Edit className="w-4 h-4" />
-                      </div>
-                    </div>
-                    <div className="p-5">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-white font-bold text-lg">{game.name}</h3>
-                        <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-600">{game.category}</span>
-                      </div>
-                      <p className="text-slate-400 text-sm mb-4">Publisher: {game.publisher}</p>
-                      <div className="flex gap-2">
-                        <button className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600">Edit Price</button>
-                        <button className="flex-1 py-2 bg-red-500/10 text-red-400 text-xs font-bold rounded hover:bg-red-500/20 border border-red-500/30">Disable</button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* CUSTOMERS TAB */}
-            {activeTab === 'customers' && (
-              <div className="bg-[#1F2937] rounded-2xl border border-slate-700 overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left text-slate-400">
-                    <thead className="text-xs text-slate-300 uppercase bg-slate-800">
-                      <tr>
-                        <th className="px-6 py-3">Customer Name</th>
-                        <th className="px-6 py-3">Phone</th>
-                        <th className="px-6 py-3">Total Spent</th>
-                        <th className="px-6 py-3">Total Orders</th>
-                        <th className="px-6 py-3">Status</th>
-                        <th className="px-6 py-3">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {ADMIN_CUSTOMERS.map((cust, idx) => (
-                        <tr key={idx} className="border-b border-slate-700 hover:bg-slate-800/50">
-                          <td className="px-6 py-4 font-bold text-white flex items-center gap-2">
-                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs">{cust.name.charAt(0)}</div>
-                            {cust.name}
-                          </td>
-                          <td className="px-6 py-4 font-mono">{cust.phone}</td>
-                          <td className="px-6 py-4 text-emerald-400 font-bold">{cust.spent}</td>
-                          <td className="px-6 py-4">{cust.orders}</td>
-                          <td className="px-6 py-4">
-                            <span className={`px-2 py-1 rounded text-xs font-bold ${cust.status === 'VIP' ? 'bg-purple-500/10 text-purple-400' :
-                              cust.status === 'New' ? 'bg-blue-500/10 text-blue-400' :
-                                'bg-emerald-500/10 text-emerald-400'
-                              }`}>
-                              {cust.status}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <button className="text-slate-400 hover:text-white"><MoreHorizontal className="w-5 h-5" /></button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {/* SETTINGS TAB */}
-            {activeTab === 'settings' && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4">
-                {/* General Settings */}
-                <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                  <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><Settings className="w-5 h-5 text-cyan-400" /> General Settings</h3>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">Site Name</label>
-                      <input type="text" defaultValue="QylexGame" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">Support WhatsApp</label>
-                      <input type="text" defaultValue="+60198313202" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-400 mb-2">Announcement Banner</label>
-                      <textarea rows="3" defaultValue="Double 11 Sale is LIVE! Get 50% Bonus Diamonds." className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white"></textarea>
-                    </div>
-                    <button className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-500 flex items-center gap-2 mt-4">
-                      <Save className="w-4 h-4" /> Save Changes
-                    </button>
-                  </div>
-                </div>
-
-                {/* Payment & Security */}
-                <div className="space-y-8">
-                  <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><CreditCard className="w-5 h-5 text-emerald-400" /> Payment Gateways</h3>
-                    <div className="space-y-4">
-                      {['Touch \'n Go eWallet', 'GrabPay', 'FPX Banking', 'Credit Card (Stripe)'].map((gw, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-700">
-                          <span className="text-white font-medium">{gw}</span>
-                          <button className="text-emerald-400"><CheckCircle2 className="w-6 h-6 fill-current opacity-80" /></button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="bg-[#1F2937] p-6 rounded-2xl border border-slate-700">
-                    <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-red-400" /> Admin Security</h3>
-                    <button className="w-full py-3 bg-slate-800 text-white rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center justify-center gap-2">
-                      <Key className="w-4 h-4" /> Change Admin Password
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 
 // --- HELPER COMPONENT: Joki Rank Selector ---
 const JokiRankSelector = ({ label, value, onChange }) => {
@@ -705,12 +93,25 @@ const JokiRankSelector = ({ label, value, onChange }) => {
 
 // --- Checkout Page Component ---
 
-const CheckoutView = ({ game, onBack }) => {
+const CheckoutView = () => {
+  const { gameId } = useParams();
+  const navigate = useNavigate();
+
+  const game = GAMES.find(g => g.id === Number(gameId));
+
+  if (!game) {
+    return <div className="text-white pt-28">Game not found</div>;
+  }
+
+  const onBack = () => {
+    navigate(-1); // goes back one step in history
+    // or navigate('/games') if you want a specific route
+  };
+
   const isJoki = game.type === 'joki';
   const isLogin = game.type === 'login'; // For Roblox & MLBB Login
   const isRoblox = game.id === 101;
   const isMLBBLogin = game.id === 100;
-
   // Package Loading
   let currentPackages = PACKAGES_MLBB;
   if (isRoblox) currentPackages = PACKAGES_ROBLOX;
@@ -834,7 +235,7 @@ const CheckoutView = ({ game, onBack }) => {
                 {/* Login Method for MLBB */}
                 {(isMLBBLogin || isJoki) && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Login Method</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Login Method</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['Moonton', 'TikTok', 'Facebook'].map(method => (
                         <button key={method} onClick={() => setLoginMethod(method)} className={`py-2 rounded-lg text-sm font-medium border transition-all ${loginMethod === method ? 'bg-purple-900/40 border-purple-500 text-white' : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-500'}`}>{method}</button>
@@ -846,32 +247,32 @@ const CheckoutView = ({ game, onBack }) => {
                 {/* Nickname for MLBB Login */}
                 {isMLBBLogin && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">In-Game Nickname</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">In-Game Nickname</label>
                     <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Your Name" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isRoblox ? "RobloxUser123" : "example@email.com"} className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Password</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Password</label>
                     <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 </div>
 
                 {isRoblox && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Backup Code (Required)</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Backup Code (Required)</label>
                     <input type="text" value={backupCode} onChange={(e) => setBackupCode(e.target.value)} placeholder="123456" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                     <p className="text-[10px] text-slate-500 mt-1">Get this from Roblox Settings {'>'} Security {'>'} Backup Codes.</p>
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Phone Number (WhatsApp)</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Phone Number (WhatsApp)</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="012-3456789" className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                 </div>
 
@@ -1008,16 +409,16 @@ const CheckoutView = ({ game, onBack }) => {
   );
 };
 
-
-
 // --- Main App ---
 
 export default function App() {
-  const [view, setView] = useState('home');
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [selectedGame, setSelectedGame] = useState(null);
+  const navigate = useNavigate();
+
+  const [activeCategory, setActiveCategory] = useState("all");
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [games, setGames] = useState([]); // <-- NEW: from DB
+
+  // products from DB
+  const [games, setGames] = useState([]);
   const [loadingGames, setLoadingGames] = useState(true);
   const [gamesError, setGamesError] = useState(null);
 
@@ -1025,8 +426,10 @@ export default function App() {
     try {
       setLoadingGames(true);
       setGamesError(null);
+
       const res = await fetch("http://localhost:5000/api/products");
       if (!res.ok) throw new Error(`Failed to load products (${res.status})`);
+
       const data = await res.json();
       setGames(data);
     } catch (e) {
@@ -1040,93 +443,127 @@ export default function App() {
     fetchProducts();
   }, []);
 
-  const handleGameClick = (game) => {
-    setSelectedGame(game);
-    setView('checkout');
-    window.scrollTo(0, 0);
+  // user login state
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("qylex_user");
+    return saved ? JSON.parse(saved) : null;
+  });
+
+  const handleLoginSuccess = (userData) => {
+    localStorage.setItem("qylex_user", JSON.stringify(userData));
+    setUser(userData);
+    navigate("/");
   };
 
-  const filteredGames = games.filter(game => {
-    if (activeCategory === 'all') return true;
-    return game.platform === activeCategory || (activeCategory === 'mobile' && game.category !== 'Service' && game.platform !== 'pc');
+  const handleLogout = () => {
+    localStorage.removeItem("qylex_user");
+    setUser(null);
+    navigate("/login");
+  };
+
+  const filteredGames = games.filter((game) => {
+    if (activeCategory === "all") return true;
+    return (
+      game.platform === activeCategory ||
+      (activeCategory === "mobile" && game.category !== "Service" && game.platform !== "pc")
+    );
   });
 
   return (
     <div className="bg-[#0B1D3A] min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      <Navbar onViewChange={setView} currentView={view} />
-      {view === 'home' ? (
-        <>
-          <PromoCarousel />
-          <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-            <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-4 scrollbar-hide">
-              {CATEGORIES.map((cat) => (
-                <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2 ${activeCategory === cat.id ? 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/50' : 'bg-slate-800 text-slate-400 border border-slate-700 hover:text-white'}`}><cat.icon className="w-4 h-4" />{cat.label}</button>
-              ))}
-            </div>
-            <div className="mb-16">
-              <div className="flex items-end justify-between mb-8">
-                <div><h2 className="text-3xl font-bold text-white flex items-center gap-2"><Flame className="text-orange-500 fill-orange-500" /> Popular Now</h2><p className="text-slate-400 mt-2">Top selling games in Malaysia this week.</p></div>
-              </div>
-              {loadingGames ? (
-                  <div className="text-slate-400">Loading games...</div>
-                ) : gamesError ? (
-                  <div className="text-red-400">Failed to load games: {gamesError}</div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-                    {filteredGames.map((game) => (
-                      <GameCard
-                        key={game.product_id || game.id}
-                        game={game}
-                        onClick={() => handleGameClick(game)}
-                      />
-                    ))}
-                  </div>
-                )}
-            </div>
-            {/* Promo Banner */}
-            <div className="relative rounded-3xl overflow-hidden bg-linear-to-r from-blue-900 to-[#0B1D3A] border border-blue-800 mb-20">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/20 blur-[100px] rounded-full"></div>
-              <div className="relative z-10 px-8 py-12 md:px-16 md:flex items-center justify-between">
-                <div>
-                  <span className="inline-block px-3 py-1 bg-orange-500 text-white text-xs font-bold rounded-full mb-4">RESELLER PROGRAM</span>
-                  <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Start Your Own Top-Up Business</h2>
-                  <p className="text-slate-300 max-w-lg mb-8 text-lg">
-                    Join QylexGame Partner Program. Get wholesale rates (up to 20% off) and automated API access.
-                  </p>
-                  <button className="px-6 py-3 bg-white text-blue-900 font-bold rounded-xl hover:bg-slate-100 transition-colors">
-                    Apply for Partnership
-                  </button>
-                </div>
-                <div className="hidden md:block mt-8 md:mt-0">
-                  <div className="w-32 h-32 bg-linear-to-tr from-cyan-400 to-blue-600 rounded-2xl rotate-12 flex items-center justify-center shadow-2xl">
-                    <Trophy className="w-16 h-16 text-white" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </main>
+      <Navbar user={user} onLogout={handleLogout} />
 
-          <WhyQylexSection />
-          <FAQSection />
+      <Routes>
+        {/* HOME */}
+        <Route
+          path="/"
+          element={
+            <>
+              <PromoCarousel />
 
-          <Footer />
-        </>
-      ) : view === 'track' ? (
-        <TrackOrderView onBack={() => setView('home')} />
-      ) : view === 'admin_login' ? (
-        <AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); setView('admin'); }} onBack={() => setView('home')} />
-      ) : view === 'admin' ? (
-        isAdminAuthenticated ? (
-  <AdminDashboard
-    onBack={() => { setIsAdminAuthenticated(false); setView('home'); }}
-    onProductChanged={fetchProducts}   // ✅ NEW
-    products={games}                   // ✅ NEW (optional)
-  />
-) : (
-  <AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); setView('admin'); }} onBack={() => setView('home')} />
-      ) ): (
-        <CheckoutView game={selectedGame} onBack={() => setView('home')} />
-      )}
+              <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+                {/* categories */}
+                <div className="flex items-center gap-4 mb-8 overflow-x-auto pb-4 scrollbar-hide">
+                  {CATEGORIES.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`px-5 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all flex items-center gap-2 ${
+                        activeCategory === cat.id
+                          ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/50"
+                          : "bg-slate-800 text-slate-400 border border-slate-700 hover:text-white"
+                      }`}
+                    >
+                      <cat.icon className="w-4 h-4" />
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* grid */}
+                <div className="mb-16">
+                  <div className="flex items-end justify-between mb-8">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        <Flame className="text-orange-500 fill-orange-500" /> Popular Now
+                      </h2>
+                      <p className="text-slate-400 mt-2">Top selling games in Malaysia this week.</p>
+                    </div>
+                  </div>
+
+                  {loadingGames ? (
+                    <div className="text-slate-400">Loading games...</div>
+                  ) : gamesError ? (
+                    <div className="text-red-400">Failed to load games: {gamesError}</div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
+                      {filteredGames.map((game) => (
+                        <GameCard
+                          key={game.product_id}
+                          game={game}
+                          onClick={() => navigate(`/checkout/${game.product_id}`)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </main>
+
+              <WhyQylexSection />
+              <FAQSection />
+              <Footer />
+            </>
+          }
+        />
+
+        {/* CHECKOUT */}
+        <Route path="/checkout/:gameId" element={<CheckoutView />} />
+
+        {/* TRACK */}
+        <Route path="/track" element={<TrackOrderView />} />
+
+        {/* LOGIN */}
+        <Route path="/login" element={<LoginPage onLogin={handleLoginSuccess} />} />
+
+        {/* ADMIN LOGIN */}
+        <Route path="/admin" element={<AdminLogin onSuccess={() => { setIsAdminAuthenticated(true); navigate("/admin/dashboard"); }} />} />
+
+        {/* ADMIN DASHBOARD */}
+        <Route
+          path="/admin/dashboard"
+          element={
+            isAdminAuthenticated ? (
+              <AdminDashboard
+                onBack={() => { setIsAdminAuthenticated(false); navigate("/"); }}
+                onProductChanged={fetchProducts}
+                products={games}
+              />
+            ) : (
+              <Navigate to="/admin" replace />
+            )
+          }
+        />
+      </Routes>
 
       <LiveSalesNotification />
       <WhatsAppFloat />
