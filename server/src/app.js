@@ -3,12 +3,15 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
+const ordersRoutes  = require("./routes/orders.routes");
+const productsRoutes = require("./routes/products.routes");
+const adminRoutes = require("./routes/admin.routers");
+
 const app = express();
 
 app.use(cors({ origin: ["http://localhost:5173", "http://localhost:3000"], credentials: true }));
 app.use(express.json());
 
-const productsRoutes = require("./routes/products.routes");
 
 // serve uploaded proofs
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
