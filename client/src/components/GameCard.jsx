@@ -1,8 +1,11 @@
 import { ChevronRight } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
 
 export default function GameCard({ game, onClick }) {
+  const navigate = useNavigate();
+
   return (
-    <div onClick={onClick} className="group relative bg-[#1F2937] rounded-2xl overflow-hidden cursor-pointer border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]">
+    <div onClick={() => navigate(`/checkout/${game.id}`)} className="group relative bg-[#1F2937] rounded-2xl overflow-hidden cursor-pointer border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]">
       <div className="h-48 relative overflow-hidden bg-white">
         <img
           src={game.image}

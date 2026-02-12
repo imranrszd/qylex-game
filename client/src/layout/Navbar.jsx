@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { Zap, Menu, X, Lock } from 'lucide-react';
+import { Menu, X, Lock } from 'lucide-react';
+import { useNavigate, Link, NavLink } from "react-router-dom";
 import qylexLogo from '../assets/qylex-logo.png';
 
 export default function Navbar({ onViewChange, currentView }) {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
+
   return (
     <nav className="fixed top-0 w-full z-50 border-b border-slate-700/50 backdrop-blur-md bg-[#0B1D3A]/90">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,19 +24,34 @@ export default function Navbar({ onViewChange, currentView }) {
           </div>
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <button onClick={() => onViewChange('home')} className={`${currentView === 'home' ? 'text-cyan-400' : 'text-slate-300'} hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors`}>Home</button>
-              <button onClick={() => onViewChange('track')} className={`${currentView === 'track' ? 'text-cyan-400' : 'text-slate-300'} hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors`}>Track Order</button>
+              <NavLink
+                to="/"
+                className={({ isActive }) =>
+                  `${isActive ? 'text-cyan-400' : 'text-slate-300'} hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors`
+                }
+              >
+                Home
+              </NavLink>
+
+              <NavLink
+                to="/track"
+                className={({ isActive }) =>
+                  `${isActive ? 'text-cyan-400' : 'text-slate-300'} hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors`
+                }
+              >
+                Track Order
+              </NavLink>
               {/* <button onClick={() => { }} className="text-slate-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Reseller Rates</button> */}
             </div>
           </div>
           <div className="hidden md:flex items-center gap-4">
-            <button
-              onClick={() => onViewChange('admin_login')}
-              
+            <Link
+              to="/admin"
+              onClick={() => setIsOpen(false)}
               className="bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium border border-slate-700 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Lock className="w-3 h-3" /> Admin
-            </button>
+            </Link>
           </div>
           <div className="-mr-2 flex md:hidden">
             <button onClick={() => setIsOpen(!isOpen)} className="text-slate-400 hover:text-white p-2">
@@ -45,9 +63,29 @@ export default function Navbar({ onViewChange, currentView }) {
       {isOpen && (
         <div className="md:hidden bg-[#0B1D3A] border-b border-slate-700">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-            <button onClick={() => { onViewChange('home'); setIsOpen(false) }} className="text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left">Home</button>
-            <button onClick={() => { onViewChange('track'); setIsOpen(false) }} className="text-slate-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">Track Order</button>
-            <button onClick={() => { onViewChange('admin_login'); setIsOpen(false) }} className="text-slate-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left">Admin Login</button>
+            <Link
+              to="/"
+              onClick={() => setIsOpen(false)}
+              className="text-white block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/track"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+            >
+              Track Order
+            </Link>
+
+            <Link
+              to="/admin"
+              onClick={() => setIsOpen(false)}
+              className="text-slate-300 block px-3 py-2 rounded-md text-base font-medium w-full text-left"
+            >
+              Admin Login
+            </Link>
           </div>
         </div>
       )}
