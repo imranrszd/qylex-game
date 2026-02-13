@@ -13,7 +13,6 @@ import {
   ArrowRight,
   Copy,
   UploadCloud,
-  Image as ImageIcon,
   Check
 } from 'lucide-react';
 
@@ -27,6 +26,7 @@ import {
 
 import {
   GAMES,
+  PAYMENTS,
 } from '../data/Others';
 
 const SITE_CONFIG = {
@@ -89,6 +89,8 @@ const CheckoutView = () => {
   let currentPackages = PACKAGES_MLBB;
   if (isRoblox) currentPackages = PACKAGES_ROBLOX;
   if (isMLBBLogin) currentPackages = PACKAGES_MLBB_LOGIN;
+
+  const [selectedPayment, setSelectedPayment] = useState(PAYMENTS[0]);
 
   // Form State
   const [userId, setUserId] = useState('');
@@ -329,7 +331,7 @@ const CheckoutView = () => {
               <div className="space-y-4">
                 {(isMLBBLogin || isJoki) && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Login Method</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Login Method</label>
                     <div className="grid grid-cols-3 gap-2">
                       {['Moonton', 'TikTok', 'Facebook'].map(method => (
                         <button key={method} onClick={() => setLoginMethod(method)} className={`py-2 rounded-lg text-sm font-medium border transition-all ${loginMethod === method ? 'bg-purple-900/40 border-purple-500 text-white' : 'bg-black border-[#282442] text-slate-400 hover:border-slate-500'}`}>{method}</button>
@@ -339,28 +341,28 @@ const CheckoutView = () => {
                 )}
                 {isMLBBLogin && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">In-Game Nickname</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">In-Game Nickname</label>
                     <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="Your Name" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">{isRoblox ? "Username" : "Email / Username"}</label>
                     <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder={isRoblox ? "RobloxUser123" : "example@email.com"} className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Password</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Password</label>
                     <input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 </div>
                 {isRoblox && (
                   <div>
-                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Backup Code (Required)</label>
+                    <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Backup Code (Required)</label>
                     <input type="text" value={backupCode} onChange={(e) => setBackupCode(e.target.value)} placeholder="123456" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase text-xs tracking-wider">Phone Number (WhatsApp)</label>
+                  <label className="block text-sm font-bold text-slate-300 mb-2 uppercase tracking-wider">Phone Number (WhatsApp)</label>
                   <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="012-3456789" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:border-purple-500 focus:outline-none" />
                 </div>
               </div>
@@ -416,8 +418,8 @@ const CheckoutView = () => {
             )}
           </div>
 
-          {/* 3. Manual Payment Info */}
-          <div className="bg-[#131122] rounded-2xl p-6 border border-[#282442] relative overflow-hidden">
+          {/* 3. Payment Info */}
+          <div className="bg-[#131122] rounded-2xl p-6 pb-12 border border-[#282442] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-emerald-500"></div>
             <div className="flex items-center gap-4 mb-4 border-b border-[#282442] pb-4">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/30">3</div>
@@ -432,6 +434,25 @@ const CheckoutView = () => {
                 </div>
               </div>
               <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+            </div>
+            <br />
+            <div className="space-y-3">
+              {PAYMENTS.map((method) => (
+                <div
+                  key={method.id}
+                  className="flex items-center justify-between p-4 rounded-xl border bg-slate-800 border-transparent opacity-50 pointer-events-none cursor-not-allowed"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-2xl">
+                      <img className="h-8" src={method.logo} alt="" />
+                    </div>
+                    <div>
+                      <h4 className="text-white font-medium">{method.name}</h4>
+                      <p className="text-slate-500 text-xs">{method.type}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
