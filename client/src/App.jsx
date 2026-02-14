@@ -1,38 +1,14 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
-  Zap,
-  ShieldCheck,
-  Headphones,
-  CreditCard,
-  ChevronRight,
-  CheckCircle2,
   Trophy,
   Flame,
-  Star,
-  Sword,
-  Lock,
-  AlertTriangle,
-  ArrowRight,
-  ThumbsUp,
 } from 'lucide-react';
-import { Routes, Route, useNavigate, useParams, Navigate } from "react-router-dom";
-
-import {
-  PACKAGES_MLBB,
-  PACKAGES_MLBB_LOGIN,
-  PACKAGES_ROBLOX,
-  JOKI_PACKAGES,
-} from './data/Packages';
+import { Routes, Route, useNavigate, Navigate } from "react-router-dom";
 
 import {
   GAMES,
-  PAYMENTS,
   CATEGORIES,
 } from './data/Others';
-
-import {
-  REVIEWS_DATA,
-} from './data/MockData';
 
 import PromoCarousel from './components/PromoCarousel';
 import WhyQylexSection from './content/WhyQylexSelection';
@@ -460,7 +436,7 @@ export default function App() {
                   <div><h2 className="text-3xl font-bold text-white flex items-center gap-2"><Flame className="text-orange-500 fill-orange-500" /> Popular Now</h2><p className="text-slate-400 mt-2">Top selling games in Malaysia this week.</p></div>
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-                  {filteredGames.map((game) => (<GameCard key={game.id} game={game} onClick={() => navigate(`/checkout/${game.id}`)} />))}
+                  {filteredGames.map((game) => (<GameCard key={game.id} game={game} onClick={() => navigate(`/checkout/${game.slug}`)} />))}
                 </div>
               </div>
               {/* Promo Banner */}
@@ -499,7 +475,7 @@ export default function App() {
         <Route path="/track" element={<TrackOrderView />} />
 
         {/* CHECKOUT */}
-        <Route path="/checkout/:gameId" element={<CheckoutView />} />
+        <Route path="/checkout/:slug" element={<CheckoutView games={games} />} />
 
         {/* ADMIN */}
         <Route path="/admin/*" element={<AdminLogin onSuccess={() => setIsAdminAuthenticated(true)} />} />

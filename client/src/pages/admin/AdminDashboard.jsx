@@ -1,8 +1,8 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState } from 'react';
 
 import {
-  Trophy, Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
+  Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
 } from 'lucide-react';
 
 import { ADMIN_STATS } from '../../data/MockData';
@@ -11,18 +11,6 @@ import OrdersTab from './OrdersTab';
 import ProductsTab from './ProductsTab';
 import CustomersTab from './CustomerTab';
 import SettingsTab from './SettingsTab';
-
-// --- Helpers & Logic ---
-const CrownIcon = Trophy;
-const operationalCost = 350;
-const targetProfit = 10000;
-const currentRevenue = 12450;
-const estimatedMargin = 0.12;
-const currentGrossProfit = currentRevenue * estimatedMargin;
-const currentNetProfit = currentGrossProfit - operationalCost;
-const profitProgress = Math.min((currentNetProfit / targetProfit) * 100, 100);
-const profitGap = targetProfit - currentNetProfit;
-
 
 // --- Sub-Components (Tabs) ---
 
@@ -99,6 +87,7 @@ const AdminDashboard = ({ games, setGames }) => {
     setIsAddProductModalOpen(false);
     setNewProduct({
       name: '',
+      slug: '',
       publisher: '',
       category: 'Mobile Games',
       type: 'topup',
@@ -183,11 +172,29 @@ const AdminDashboard = ({ games, setGames }) => {
                         type="text"
                         required
                         value={newProduct.name}
-                        onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                        onChange={e => {
+                          const name = e.target.value;
+                          const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                          setNewProduct({ ...newProduct, name: name, slug: slug })
+                        }}
                         className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
                         placeholder="e.g. Valorant"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Slug (URL)</label>
+                      <input
+                        type="text"
+                        required
+                        value={newProduct.slug}
+                        onChange={e => setNewProduct({ ...newProduct, slug: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                        placeholder="e.g. valorant"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Publisher</label>
                       <input
@@ -199,9 +206,6 @@ const AdminDashboard = ({ games, setGames }) => {
                         placeholder="e.g. Riot Games"
                       />
                     </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Category</label>
                       <select
@@ -217,6 +221,9 @@ const AdminDashboard = ({ games, setGames }) => {
                         <option>Service</option>
                       </select>
                     </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm text-slate-400 mb-1">Platform</label>
                       <select
@@ -229,19 +236,18 @@ const AdminDashboard = ({ games, setGames }) => {
                         <option value="service">Service</option>
                       </select>
                     </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Type</label>
-                    <select
-                      value={newProduct.type}
-                      onChange={e => setNewProduct({ ...newProduct, type: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
-                    >
-                      <option value="topup">Direct Top Up (ID)</option>
-                      <option value="login">Login Method</option>
-                      <option value="joki">Joki / Boosting</option>
-                    </select>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Type</label>
+                      <select
+                        value={newProduct.type}
+                        onChange={e => setNewProduct({ ...newProduct, type: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option value="topup">Direct Top Up (ID)</option>
+                        <option value="login">Login Method</option>
+                        <option value="joki">Joki / Boosting</option>
+                      </select>
+                    </div>
                   </div>
 
                   <div>

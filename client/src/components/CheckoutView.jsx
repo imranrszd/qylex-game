@@ -67,11 +67,11 @@ const JokiRankSelector = ({ label, value, onChange }) => {
 
 // --- Checkout Page Component ---
 
-const CheckoutView = () => {
-  const { gameId } = useParams();
+const CheckoutView = ({ games }) => {
+  const { slug } = useParams();
   const navigate = useNavigate();
 
-  const game = GAMES.find(g => g.id === Number(gameId));
+  const game = games.find(g => g.slug === slug);
 
   if (!game) {
     return <div className="text-white pt-28">Game not found</div>;
