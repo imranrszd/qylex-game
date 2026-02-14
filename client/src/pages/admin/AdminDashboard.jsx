@@ -57,13 +57,15 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const basePath = '/admin/dashboard';
+
   const tabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: 'overview' },
-    { id: 'strategy', label: 'Strategy', icon: TrendingUp, path: 'strategy' },
-    { id: 'orders', label: 'Orders', icon: ShoppingBag, path: 'orders' },
-    { id: 'products', label: 'Products', icon: Package, path: 'products' },
-    { id: 'customers', label: 'Customers', icon: Users, path: 'customers' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: 'settings' },
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: `${basePath}/overview` },
+    { id: 'strategy', label: 'Strategy', icon: TrendingUp, path: `${basePath}/strategy` },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag, path: `${basePath}/orders` },
+    { id: 'products', label: 'Products', icon: Package, path: `${basePath}/products` },
+    { id: 'customers', label: 'Customers', icon: Users, path: `${basePath}/customers` },
+    { id: 'settings', label: 'Settings', icon: Settings, path: `${basePath}/settings` },
   ];
 
   // Helper to format title based on current path
@@ -85,7 +87,7 @@ const AdminDashboard = () => {
                 {tabs.map(tab => (
                   <NavLink
                     key={tab.id}
-                    to={tab.path}
+                    to={`../${tab.path}`}
                     className={({ isActive }) => `w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                       }`}
                   >

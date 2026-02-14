@@ -1,5 +1,5 @@
 import {
-  Sword, Users, Target
+  Sword, Users, Target, Trophy
 } from 'lucide-react';
 
 
