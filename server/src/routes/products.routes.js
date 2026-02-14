@@ -1,29 +1,12 @@
-const express = require("express")
-const pool = require("../db/pool")
-
+const express = require("express");
 const router = express.Router();
 
-router.get("/products", async (req, res, next) => {
-  try {
-    const q = await pool.query(`
-      SELECT
-        product_id,
-        title AS name,
-        image_url AS image,
-        publisher,
-        category,
-        type,
-        platform,
-        slug
-      FROM products
-      WHERE is_active = true
-      ORDER BY created_at DESC
-    `);
+const catalogController = require("../controllers/catalog.controller");
 
-    res.json(q.rows);
-  } catch (e) {
-    next(e);
-  }
-});
+// GET /api/products
+router.get("/products", catalogController.listProducts);
+
+// GET /api/products/:slug
+router.get("/products/:slug", catalogController.getProduct);
 
 module.exports = router;
