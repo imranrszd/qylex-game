@@ -3,6 +3,16 @@ import {
 } from 'lucide-react';
 
 
+// --- Helpers & Logic ---
+const CrownIcon = Trophy;
+const operationalCost = 350;
+const targetProfit = 10000;
+const currentRevenue = 12450;
+const estimatedMargin = 0.12;
+const currentGrossProfit = currentRevenue * estimatedMargin;
+const currentNetProfit = currentGrossProfit - operationalCost;
+const profitProgress = Math.min((currentNetProfit / targetProfit) * 100, 100);
+
 const STRATEGY_INSIGHTS = [
   { title: "High Margin Opportunity", desc: "Joki Services have a 90% profit margin.", action: "Add 'Joki' popup on MLBB page.", impact: "Potential +RM 1,200/mo", icon: Sword, color: "text-purple-400", bg: "bg-purple-500/10" },
   { title: "Reseller Dormancy", desc: "12 Resellers inactive for 7 days.", action: "Send automated WhatsApp discount.", impact: "Recover ~RM 800 Revenue", icon: Users, color: "text-orange-400", bg: "bg-orange-500/10" },
