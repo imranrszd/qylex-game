@@ -124,38 +124,4 @@ router.post("/orders/:orderId/approve", requireAdmin, async (req, res, next) => 
     }
 });
 
-router.post("/products", requireAdmin, async (req,res,next) => {
-    try {
-        const { title, slug, image_url, publisher, category, type, platform, is_active } = req.body;
-
-        if (!title || !image_url) {
-            return res.status(400).json({ message: "title, slug and image_url required" });
-        }
-
-         const ins = await pool.query(
-            `INSERT INTO products (title, slug, image_url, publisher, category, type, platform, is_active)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-            RETURNING product_id`,
-            [
-                title.trim(),
-                slug.trim(),
-                image_url,
-                publisher || null,
-                category || "Game",
-                type || "topup",
-                platform || "mobile",
-                is_active ?? true,
-            ]
-        );
-
-        res.json({ message: "Product added", productId: ins.rows[0].product_id });
-    } catch (e) {
-        if (e.code === "23505") {
-      return res.status(409).json({ message: "slug dah wujud" });
-    }
-        next(e)
-    }
-})
-
-
 module.exports = router;
