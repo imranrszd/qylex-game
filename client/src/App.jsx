@@ -403,6 +403,9 @@ export default function App() {
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [games, setGames] = useState([]);
 
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
+
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('qylex_user');
     return saved ? JSON.parse(saved) : null;
