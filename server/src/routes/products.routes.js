@@ -10,10 +10,10 @@ router.get("/products", async (req, res, next) => {
         product_id,
         title AS name,
         image_url AS image,
-        'Qylex'::text AS publisher,
-        'Game'::text AS category,
-        'topup'::text AS type,
-        'mobile'::text AS platform,
+        publisher,
+        category,
+        type,
+        platform,
         slug
       FROM products
       WHERE is_active = true

@@ -1,24 +1,27 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
 
-const ordersRoutes  = require("./routes/orders.routes");
-const productsRoutes = require("./routes/products.routes");
-const adminRoutes = require("./routes/admin.routers");
+const ordersRoutes = require("./routes/orders.routes"); // semua api/order
+const productsRoutes = require("./routes/products.routes"); // semua api/product
+const adminRoutes = require("./routes/admin.routers"); // admin auth
+const adminProductsRoutes = require("./routes/admin.products.routes"); // crud admin product
 
 const app = express();
 
-app.use(cors({ origin: ["http://localhost:5173", "http://localhost:3000"], credentials: true }));
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000"], // dah deploy tukar origin ke domain production
+  credentials: true
+}));
+
 app.use(express.json());
 
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
-// serve uploaded proofs
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
-app.use("/api", ordersRoutes);
-app.use("/api/admin", adminRoutes);
-app.use("/api", productsRoutes )
+app.use("/api", ordersRoutes); // kalau dalam route ada mcm router.post("/orders") dia akan jadi url mcmni /api/orders
+app.use("/api/admin", adminRoutes); 
+app.use("/api", productsRoutes);
+app.use("/api/admin", adminProductsRoutes);
 
 app.use((err, req, res, next) => {
   console.error(err);
