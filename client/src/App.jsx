@@ -415,6 +415,7 @@ const THEME = {
 export default function App() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
+  const [games, setGames] = useState(GAMES);
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('qylex_user');
@@ -434,7 +435,7 @@ export default function App() {
   };
 
   const navigate = useNavigate();
-  const filteredGames = GAMES.filter(game => {
+  const filteredGames = games.filter(game => {
     if (activeCategory === 'all') return true;
     return game.platform === activeCategory || (activeCategory === 'mobile' && game.category !== 'Service' && game.platform !== 'pc');
   });
@@ -507,7 +508,7 @@ export default function App() {
           path="/admin/dashboard/*"
           element={
             isAdminAuthenticated
-              ? <AdminDashboard onBack={() => setIsAdminAuthenticated(false)} />
+              ? <AdminDashboard onBack={() => setIsAdminAuthenticated(false)} games={games} setGames={setGames} />
               : <Navigate to="/admin" replace />
           }
         />

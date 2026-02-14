@@ -23,13 +23,13 @@ export const SITE_CONFIG = {
 
 // TYPES: 'topup' (ID only), 'joki' (Rank Calc), 'login' (Account Credentials)
 export const GAMES = [
-  { id: 1, name: "Mobile Legends", publisher: "Moonton", category: "MOBA", type: "topup", platform: "mobile", image: mlbbImg, icon: "⚔️" },
-  { id: 100, name: "MLBB (Via Login)", publisher: "Moonton", category: "MOBA", type: "login", platform: "mobile", image: mlbbImg, icon: "🔑" },
-  { id: 101, name: "Roblox", publisher: "Roblox Corp", category: "Sandbox", type: "login", platform: "mobile", image: robloxImg, icon: "🟥" },
-  { id: 99, name: "MLBB Rank Boost", publisher: "Qylex Pro Team", category: "Service", type: "joki", platform: "service", image: mlbbImg, icon: "🚀" },
-  { id: 2, name: "PUBG Mobile", publisher: "Tencent", category: "Battle Royale", type: "topup", platform: "mobile", image: pubgImg, icon: "🔫" },
-  { id: 3, name: "Valorant", publisher: "Riot Games", category: "FPS", type: "topup", platform: "pc", image: valorantImg, icon: "🎯" },
-  { id: 4, name: "Genshin Impact", publisher: "HoYoverse", category: "RPG", type: "topup", platform: "mobile", image: genshinImg, icon: "✨" },
+  { id: 1, name: "Mobile Legends", publisher: "Moonton", category: "MOBA", type: "topup", platform: "mobile", image: mlbbImg },
+  { id: 100, name: "MLBB (Via Login)", publisher: "Moonton", category: "MOBA", type: "login", platform: "mobile", image: mlbbImg },
+  { id: 101, name: "Roblox", publisher: "Roblox Corp", category: "Sandbox", type: "login", platform: "mobile", image: robloxImg },
+  { id: 99, name: "MLBB Rank Boost", publisher: "Qylex Pro Team", category: "Service", type: "joki", platform: "service", image: mlbbImg },
+  { id: 2, name: "PUBG Mobile", publisher: "Tencent", category: "Battle Royale", type: "topup", platform: "mobile", image: pubgImg },
+  { id: 3, name: "Valorant", publisher: "Riot Games", category: "FPS", type: "topup", platform: "pc", image: valorantImg },
+  { id: 4, name: "Genshin Impact", publisher: "HoYoverse", category: "RPG", type: "topup", platform: "mobile", image: genshinImg },
 ];
 
 export const PAYMENTS = [

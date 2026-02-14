@@ -1,11 +1,9 @@
 import { Edit } from 'lucide-react';
 
-import { GAMES } from '../../data/Others';
-
-const ProductsTab = () => (
+const ProductsTab = ({ games }) => (
 
   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
-    {GAMES.map((game) => (
+    {games.map((game) => (
       <div key={game.id} className="bg-[#1F2937] rounded-2xl border border-slate-700 overflow-hidden hover:border-cyan-500/50 transition-all">
         <div className="h-32 bg-cover bg-center relative" style={{ backgroundImage: `url(${game.image})` }}>
           <div className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg text-white backdrop-blur-md">

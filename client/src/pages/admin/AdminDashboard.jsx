@@ -1,7 +1,8 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+
 import {
-  ShieldCheck, CreditCard, CheckCircle2, Trophy, Plus, Package, Key, Users,
-  ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download, Save
+  Trophy, Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
 } from 'lucide-react';
 
 import { ADMIN_STATS } from '../../data/MockData';
@@ -53,9 +54,10 @@ const DashboardTab = () => (
 );
 
 // --- MAIN DASHBOARD ---
-const AdminDashboard = () => {
+const AdminDashboard = ({ games, setGames }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
 
   const basePath = '/admin/dashboard';
 
@@ -73,6 +75,37 @@ const AdminDashboard = () => {
     const path = location.pathname.split('/').pop();
     if (path === 'strategy') return 'Strategy & Growth';
     return path.charAt(0).toUpperCase() + path.slice(1);
+  };
+
+
+  // New Product Form State
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    publisher: '',
+    category: 'Mobile Games',
+    type: 'topup',
+    platform: 'mobile',
+    image: '',
+    icon: '🎮'
+  });
+
+  const handleAddProduct = (e) => {
+    e.preventDefault();
+    const productToAdd = {
+      ...newProduct,
+      id: Math.floor(Math.random() * 100000)
+    };
+    setGames([...games, productToAdd]);
+    setIsAddProductModalOpen(false);
+    setNewProduct({
+      name: '',
+      publisher: '',
+      category: 'Mobile Games',
+      type: 'topup',
+      platform: 'mobile',
+      image: ''
+    });
+    alert("Product added successfully!");
   };
 
   return (
@@ -111,7 +144,10 @@ const AdminDashboard = () => {
                   <Download className="w-4 h-4" /> Export
                 </button>
                 {location.pathname.includes('products') && (
-                  <button className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-cyan-500 flex items-center gap-2">
+                  <button
+                    onClick={() => setIsAddProductModalOpen(true)}
+                    className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-cyan-500 flex items-center gap-2"
+                  >
                     <Plus className="w-4 h-4" /> Add Product
                   </button>
                 )}
@@ -123,13 +159,123 @@ const AdminDashboard = () => {
               <Route path="overview" element={<DashboardTab />} />
               <Route path="strategy" element={<StrategyTab />} />
               <Route path="orders/*" element={<OrdersTab />} />
-              <Route path="products/*" element={<ProductsTab />} />
+              <Route path="products/*" element={<ProductsTab games={games} setGames={setGames} />} />
               <Route path="customers/*" element={<CustomersTab />} />
               <Route path="settings/*" element={<SettingsTab />} />
             </Routes>
 
           </div>
+          {/* ADD PRODUCT MODAL */}
+          {isAddProductModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-[#131122] rounded-2xl p-6 w-full max-w-lg border border-[#282442] shadow-2xl relative">
+                <button onClick={() => setIsAddProductModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-[#1d1936]"><X className="w-5 h-5" /></button>
 
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <PlusCircle className="w-6 h-6 text-cyan-400" /> Add New Product
+                </h2>
+
+                <form onSubmit={handleAddProduct} className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Product Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={newProduct.name}
+                        onChange={e => setNewProduct({ ...newProduct, name: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                        placeholder="e.g. Valorant"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Publisher</label>
+                      <input
+                        type="text"
+                        required
+                        value={newProduct.publisher}
+                        onChange={e => setNewProduct({ ...newProduct, publisher: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                        placeholder="e.g. Riot Games"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Category</label>
+                      <select
+                        value={newProduct.category}
+                        onChange={e => setNewProduct({ ...newProduct, category: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option>MOBA</option>
+                        <option>FPS</option>
+                        <option>Battle Royale</option>
+                        <option>RPG</option>
+                        <option>Sandbox</option>
+                        <option>Service</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Platform</label>
+                      <select
+                        value={newProduct.platform}
+                        onChange={e => setNewProduct({ ...newProduct, platform: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option value="mobile">Mobile</option>
+                        <option value="pc">PC</option>
+                        <option value="service">Service</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Type</label>
+                    <select
+                      value={newProduct.type}
+                      onChange={e => setNewProduct({ ...newProduct, type: e.target.value })}
+                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                    >
+                      <option value="topup">Direct Top Up (ID)</option>
+                      <option value="login">Login Method</option>
+                      <option value="joki">Joki / Boosting</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-400 mb-1">Image URL (Optional)</label>
+                    <input
+                      type="text"
+                      value={newProduct.image}
+                      onChange={e => setNewProduct({ ...newProduct, image: e.target.value })}
+                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      placeholder="https://..."
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Leave empty for default gradient.</p>
+                  </div>
+
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsAddProductModalOpen(false)}
+                      className="flex-1 py-3 bg-[#1d1936] text-slate-300 rounded-xl text-sm font-bold hover:bg-[#282442]"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-500"
+                    >
+                      Create Product
+                    </button>
+                  </div>
+
+                </form>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
