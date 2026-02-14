@@ -398,6 +398,7 @@ export default function App() {
     })
     .catch(err => console.error("Failed to fetch products:", err));
 }, []);
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [games, setGames] = useState([]);
