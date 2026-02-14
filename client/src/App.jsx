@@ -43,7 +43,7 @@ import GameCard from './components/GameCard';
 import Navbar from './layout/Navbar';
 import Footer from './layout/footer';
 import TrackOrderView from './components/TrackOrderView';
-import AdminDashboard from './components/AdminDashboard';
+import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import LoginPage from './components/login';
 import CheckoutView from './components/CheckoutView';
