@@ -68,12 +68,13 @@ const AdminDashboard = ({ games, setGames }) => {
 
   // New Product Form State
   const [newProduct, setNewProduct] = useState({
-    name: '',
+    title: '',
+    slug: '',
     publisher: '',
     category: 'Mobile Games',
     type: 'topup',
     platform: 'mobile',
-    image: '',
+    image_url: '',
     icon: '🎮'
   });
 
@@ -86,13 +87,13 @@ const AdminDashboard = ({ games, setGames }) => {
     setGames([...games, productToAdd]);
     setIsAddProductModalOpen(false);
     setNewProduct({
-      name: '',
+      title: '',
       slug: '',
       publisher: '',
       category: 'Mobile Games',
       type: 'topup',
       platform: 'mobile',
-      image: ''
+      image_url: ''
     });
     alert("Product added successfully!");
   };
@@ -154,6 +155,7 @@ const AdminDashboard = ({ games, setGames }) => {
             </Routes>
 
           </div>
+
           {/* ADD PRODUCT MODAL */}
           {isAddProductModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
@@ -171,11 +173,11 @@ const AdminDashboard = ({ games, setGames }) => {
                       <input
                         type="text"
                         required
-                        value={newProduct.name}
+                        value={newProduct.title}
                         onChange={e => {
-                          const name = e.target.value;
-                          const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-                          setNewProduct({ ...newProduct, name: name, slug: slug })
+                          const title = e.target.value;
+                          const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                          setNewProduct({ ...newProduct, title: title, slug: slug })
                         }}
                         className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
                         placeholder="e.g. Valorant"

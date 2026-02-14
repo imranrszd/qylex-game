@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Trophy,
   Flame,
@@ -21,8 +21,9 @@ import Footer from './layout/footer';
 import TrackOrderView from './components/TrackOrderView';
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
-import LoginPage from './components/login';
+import LoginPage from './pages/login/login';
 import CheckoutView from './components/CheckoutView';
+import SignupPage from './pages/login/signup';
 
 // --- Configuration & Data ---
 
@@ -389,20 +390,34 @@ const THEME = {
 // --- Main App ---
 
 export default function App() {
+
+  const navigate = useNavigate();
+
   const [activeCategory, setActiveCategory] = useState('all');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
   const [games, setGames] = useState(GAMES);
+
+  const token = localStorage.getItem('token');
+  const role = localStorage.getItem('role');
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('qylex_user');
     return saved ? JSON.parse(saved) : null;
   });
 
-  // 1. Create the Logout function
+  useEffect(() => {
+    if (token && !user) {
+      setUser({ email: localStorage.getItem('email'), role });
+    }
+  }, [token, role, user]);
+
   const handleLogout = () => {
-    localStorage.removeItem('qylex_user'); // Clear storage
-    setUser(null); // Clear state
-    navigate('/login'); // Redirect to login
+    localStorage.removeItem('token');
+    localStorage.removeItem('role');
+    localStorage.removeItem('qylex_user');
+
+    setUser(null);
+    navigate('/login', { replace: true });
   };
 
   const handleLoginSuccess = (userData) => {
@@ -410,7 +425,6 @@ export default function App() {
     setUser(userData);
   };
 
-  const navigate = useNavigate();
   const filteredGames = games.filter(game => {
     if (activeCategory === 'all') return true;
     return game.platform === activeCategory || (activeCategory === 'mobile' && game.category !== 'Service' && game.platform !== 'pc');
@@ -470,6 +484,7 @@ export default function App() {
         } />
 
         <Route path="/login" element={<LoginPage onLogin={handleLoginSuccess} />} />
+        <Route path="/signup" element={<SignupPage />} />
 
         {/* TRACK */}
         <Route path="/track" element={<TrackOrderView />} />

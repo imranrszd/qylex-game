@@ -49,7 +49,7 @@ export default function Navbar({ user, onLogout }) {
           <div className="hidden md:flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4">
-                <span className="text-white text-sm">Hi, {user.name}</span>
+                <span className="text-white text-sm">Hi, {user.username}</span>
 
                 {/* 1. ONLY SHOW ADMIN BUTTON IF ROLE IS ADMIN */}
                 {user.role === 'ADMIN' && (
