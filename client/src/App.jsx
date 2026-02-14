@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Trophy,
   Flame,
@@ -389,9 +389,18 @@ const THEME = {
 // --- Main App ---
 
 export default function App() {
+
+  useEffect(() => {
+  fetch("http://localhost:5000/api/products")
+    .then(res => res.json())
+    .then(data => {
+      setGames(data.data); // because backend returns { data: [...] }
+    })
+    .catch(err => console.error("Failed to fetch products:", err));
+}, []);
   const [activeCategory, setActiveCategory] = useState('all');
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [games, setGames] = useState(GAMES);
+  const [games, setGames] = useState([]);
 
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('qylex_user');
