@@ -1,6 +1,6 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, getAdminProducts } from '../../api/product.api';
+import { createProduct, updateProduct, createPackages, updatePackages, disableProduct, deleteProduct, enableProduct, getAdminProducts } from '../../api/product.api';
 
 import {
   Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
@@ -12,6 +12,10 @@ import OrdersTab from './OrdersTab';
 import ProductsTab from './ProductsTab';
 import CustomersTab from './CustomerTab';
 import SettingsTab from './SettingsTab';
+import ProductEditorModal from '../../components/ProductEditorModal';
+import {
+  INITIAL_PACKAGES
+} from '../../data/Packages';
 
 // --- Sub-Components (Tabs) ---
 
@@ -49,6 +53,9 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
   const [editProduct, setEditProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editingGame, setEditingGame] = useState(null);
+  const [productPackages, setProductPackages] = useState(INITIAL_PACKAGES);
 
   const basePath = '/admin/dashboard';
 
@@ -86,22 +93,6 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
     image_url: '',
     icon: '🎮'
   });
-
-  // for edit product form state
-  const openEditModal = (product) => {
-    setEditProduct({
-      product_id: product.product_id,
-      title: product.title ?? "",
-      slug: product.slug ?? "",
-      publisher: product.publisher ?? "",
-      category: product.category ?? "MOBA",
-      type: product.type ?? "topup",
-      platform: product.platform ?? "mobile",
-      image_url: product.image_url ?? "",
-      icon: product.icon ?? "🎮",
-    });
-    setIsEditProductModalOpen(true);
-  };
 
   // data untuk createProduct
   const handleAddProduct = async (e) => {
@@ -163,6 +154,25 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
     }
   };
 
+  const handleSaveProduct = (updatedDetails) => {
+    if (editingProduct?.product_id) {
+      // UPDATE
+      setGames(prev =>
+        prev.map(g =>
+          g.product_id === editingProduct.product_id ? { ...g, ...updatedDetails } : g
+        )
+      );
+    } else {
+      // CREATE
+      const newId = crypto.randomUUID(); // better than Math.random
+      const newGame = { ...updatedDetails, id: newId };
+
+      setGames(prev => [...prev, newGame]);
+    }
+
+    // CLOSE MODAL
+    setEditingProduct(null);
+  };
 
 
   return (
@@ -202,7 +212,7 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
                 </button>
                 {location.pathname.includes('products') && (
                   <button
-                    onClick={() => setIsAddProductModalOpen(true)}
+                    onClick={() => setEditingGame({})}
                     className="bg-cyan-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-cyan-500 flex items-center gap-2"
                   >
                     <Plus className="w-4 h-4" /> Add Product
@@ -216,7 +226,7 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
               <Route path="overview" element={<DashboardTab />} />
               <Route path="strategy" element={<StrategyTab />} />
               <Route path="orders/*" element={<OrdersTab />} />
-              <Route path="products/*" element={<ProductsTab games={games} setGames={setGames} onEdit={openEditModal} onDisable={handleDisableProduct} onDelete={handleDeleteProduct} onEnable={handleEnableProduct} />} />
+              <Route path="products/*" element={<ProductsTab games={games} setGames={setGames} onEdit={setEditingGame} onDisable={handleDisableProduct} onDelete={handleDeleteProduct} onEnable={handleEnableProduct} />} />
               <Route path="customers/*" element={<CustomersTab />} />
               <Route path="settings/*" element={<SettingsTab />} />
             </Routes>
@@ -224,7 +234,7 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
           </div>
 
           {/* ADD PRODUCT MODAL */}
-          {isAddProductModalOpen && (
+          {/* {isAddProductModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
               <div className="bg-[#131122] rounded-2xl p-6 w-full max-w-lg border border-[#282442] shadow-2xl relative">
                 <button onClick={() => setIsAddProductModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-[#1d1936]"><X className="w-5 h-5" /></button>
@@ -496,6 +506,51 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
                 </form>
               </div>
             </div>
+          )} */}
+
+          {/* UNIFIED PRODUCT EDITOR MODAL */}
+          {editingGame && (
+            <ProductEditorModal
+              product={editingGame.product_id ? editingGame : null}
+              currentPackages={editingGame.product_id ? (productPackages[editingGame.product_id] || []) : []}
+              // onSaveProduct={(details) => {
+              //   let productId = editingGame.product_id;
+              //   if (productId) {
+              //     // Update existing
+              //     setGames(games.map(g => g.product_id === productId ? { ...g, ...details } : g));
+              //   } else {
+              //     // Create new
+              //     productId = Math.floor(Math.random() * 100000);
+              //     const newGame = { ...details, product_id: productId };
+              //     setGames([...games, newGame]);
+              //     setProductPackages(prev => ({ ...prev, [productId]: [] }));
+              //   }
+              //   // We update the editingGame so next time we save packages it has an ID
+              //   setEditingGame({ ...details, product_id: productId });
+              // }}
+              // onSavePackages={(pkgs) => {
+              //   // This runs after product save, so we rely on the state update if sequential
+              //   // But in this unified modal, we can actually pass a consolidated onSave prop to handle both atomically
+              // }}
+              // Better approach: Unified Handler
+              onSave={async (details, pkgs) => {
+                let productId = editingGame?.product_id;
+
+                if (productId) {
+                  await updateProduct(productId, details);
+                  await updatePackages(productId, pkgs);
+                } else {
+                  const created = await createProduct(details);
+                  productId = created.product_id;
+                  await createPackages(productId, pkgs);
+                }
+
+                const refreshed = await getAdminProducts();
+                setGames(refreshed);
+              }}
+
+              onClose={() => setEditingGame(null)}
+            />
           )}
         </div>
       </div>

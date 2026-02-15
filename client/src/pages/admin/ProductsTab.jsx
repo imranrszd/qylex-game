@@ -4,8 +4,9 @@ import EditPackagesModal from "../../components/EditPackageModal";
 import {
   INITIAL_PACKAGES
 } from '../../data/Packages';
+import ProductEditorModal from "../../components/ProductEditorModal";
 
-const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
+const ProductsTab = ({ games, setGames, onEdit, onDelete, onDisable, onEnable }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editingGame, setEditingGame] = useState(null);
@@ -29,7 +30,7 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
               {/* Edit */}
               <button
                 type="button"
-                onClick={() => onEdit?.(game)}
+                onClick={() => onEdit(game)}
                 className="absolute top-2 right-12 bg-black/50 p-2 rounded-lg text-white backdrop-blur-md hover:bg-black/70 transition"
                 aria-label={`Edit ${game.title}`}
               >
@@ -112,7 +113,7 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
 
               <div className="flex gap-2 mt-auto">
                 <button
-                  onClick={() => setEditingGame(game)}
+                  onClick={() => onEdit(game)}
                   className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600"
                 >
                   Edit Price
@@ -176,7 +177,7 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
         </div>
       )}
       {/* EDIT PACKAGES MODAL */}
-      {editingGame && (
+      {/* {editingGame && (
         <EditPackagesModal
           game={editingGame}
           currentPackages={productPackages[editingGame.product_id]}
@@ -189,7 +190,9 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
           }}
           onClose={() => setEditingGame(null)}
         />
-      )}
+      )} */}
+
+
     </>
   );
 };

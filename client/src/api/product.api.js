@@ -13,7 +13,7 @@ export async function createProduct(data) {
     throw new Error(json.message || "Failed to create product");
   }
 
-alert("Product added to database ✅");
+  alert("Product added to database ✅");
   return json;
 }
 
@@ -38,6 +38,53 @@ export async function updateProduct(product_id, data) {
   }
 
   alert("Product updated successfully ✅");
+  return json;
+}
+
+export async function getPackages() {
+  const res = await fetch(`${API_BASE}/admin/packages`);
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || "Failed to fetch packages");
+  }
+
+  return json.data; // assuming your backend wraps it in { data: [...] }
+}
+
+// Create packages for a product
+export async function createPackages(product_id, packages) {
+  const res = await fetch(`${API_BASE}/admin/products/${product_id}/packages`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(packages),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || "Failed to create packages");
+  }
+
+  alert("Packages added to database ✅");
+  return json;
+}
+
+// Update packages for a product
+export async function updatePackages(product_id, packages) {
+  const res = await fetch(`${API_BASE}/admin/products/${product_id}/packages`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(packages),
+  });
+
+  const json = await res.json();
+
+  if (!res.ok) {
+    throw new Error(json.message || "Failed to update packages");
+  }
+
+  alert("Packages updated successfully ✅");
   return json;
 }
 
