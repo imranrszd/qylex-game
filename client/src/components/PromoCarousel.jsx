@@ -41,7 +41,7 @@ export default function PromoCarousel() {
 
   return (
     <div className="relative pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="relative h-80 md:h-100 rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 group">
+      <div className="relative h-96 md:h-100 rounded-3xl overflow-hidden shadow-2xl border border-slate-700/50 group">
         <div className="absolute inset-0 flex transition-transform duration-700 ease-out" style={{ transform: `translateX(-${current * 100}%)` }}>
           {PROMO_SLIDES.map((slide) => (
             <div key={slide.id} className="min-w-full h-full relative">
@@ -53,9 +53,9 @@ export default function PromoCarousel() {
                 <div className="inline-flex items-center gap-2 mb-4">
                   <span className="px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-white text-xs font-bold border border-white/20 uppercase tracking-wider">{slide.title.includes("Joki") ? "Pro Service" : "Featured Event"}</span>
                 </div>
-                <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">{slide.title}</h2>
-                <p className="text-lg text-slate-200 mb-8 max-w-xl">{slide.description}</p>
-                <button className="w-fit px-8 py-4 bg-white text-slate-900 font-bold rounded-xl shadow-lg hover:bg-slate-100 transform hover:-translate-y-1 transition-all flex items-center gap-2">{slide.cta} <ChevronRight className="w-5 h-5" /></button>
+                <h2 className="text-3xl sm:text-5xl font-extrabold text-white mb-4 tracking-tight leading-tight">{slide.title}</h2>
+                <p className="text:xs leading-tight sm:leading-0 sm:text-lg text-slate-200 mb-8 max-w-xl">{slide.description}</p>
+                <button className="w-fit px-4 sm:px-8 py-2 sm:py-4 bg-white text-slate-900 font-bold rounded sm:rounded-xl shadow-lg hover:bg-slate-100 transform hover:-translate-y-1 transition-all flex items-center gap-2">{slide.cta} <ChevronRight className="w-5 h-5" /></button>
               </div>
             </div>
           ))}

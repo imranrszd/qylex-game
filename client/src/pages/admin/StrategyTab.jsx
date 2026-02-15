@@ -25,7 +25,7 @@ const StrategyTab = () => (
       <h2 className="text-white text-2xl font-bold mb-1 flex items-center gap-2"><Target className="w-6 h-6 text-red-500" /> Road to RM 10k Net Profit</h2>
       <p className="text-4xl font-bold text-emerald-400 mt-4">RM {currentNetProfit.toLocaleString()}</p>
       <div className="h-4 bg-slate-800 rounded-full mt-6 overflow-hidden">
-        <div className="h-full bg-linear-to-r from-blue-600 to-emerald-500" style={{ width: `${profitProgress}%` }}></div>
+        <div className="h-full bg-gradient-to-r from-blue-600 to-emerald-500" style={{ width: `${profitProgress}%` }}></div>
       </div>
     </div>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -13,11 +13,11 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4">
         {games.map((game) => (
           <div
             key={game.product_id}
-            className={`bg-[#1F2937] rounded-2xl border overflow-hidden transition-all ${game.is_active
+            className={`bg-[#1F2937] rounded-2xl border overflow-hidden transition-all flex flex-col ${game.is_active
               ? "border-slate-700 hover:border-cyan-500/50"
               : "border-red-500/40 opacity-75"
               }`}
@@ -100,17 +100,17 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
               )}
             </div>
 
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-white font-bold text-lg">{game.title}</h3>
-                <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-600">
+            <div className="p-5 flex flex-col flex-1">
+              <div className="flex justify-between items-center mb-2 gap-3">
+                <h3 className="text-white font-bold text-lg leading-tight">{game.title}</h3>
+                <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded border border-slate-600 text-center leading-tight ">
                   {game.category}
                 </span>
               </div>
 
               <p className="text-slate-400 text-sm mb-4">Publisher: {game.publisher}</p>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 mt-auto">
                 <button
                   onClick={() => setEditingGame(game)}
                   className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600"

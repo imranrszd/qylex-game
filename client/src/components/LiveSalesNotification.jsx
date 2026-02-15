@@ -31,13 +31,13 @@ export default function LiveSalesNotification() {
 
   return (
     <div className="fixed bottom-6 left-4 z-50 animate-in slide-in-from-left duration-500">
-      <div className="bg-slate-800/90 backdrop-blur border border-slate-700 p-3 rounded-xl shadow-2xl flex items-center gap-3 pr-6">
+      <div className="bg-slate-800/90 backdrop-blur border border-slate-700 p-2 rounded-xl shadow-2xl flex items-center gap-3 pr-6">
         <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400">
           <ShoppingBag className="w-5 h-5" />
         </div>
         <div>
           <p className="text-xs text-slate-400">{data.time}</p>
-          <p className="text-sm font-bold text-white"><span className="text-cyan-400">{data.user}</span> bought {data.item}</p>
+          <p className="text-xs sm:text-sm font-bold text-white"><span className="text-cyan-400">{data.user}</span> bought {data.item}</p>
         </div>
       </div>
     </div>

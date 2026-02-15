@@ -1,5 +1,5 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
-import { useState, useEffect  } from 'react';
+import { useState, useEffect } from 'react';
 import { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, getAdminProducts } from '../../api/product.api';
 
 import {
@@ -69,18 +69,18 @@ const AdminDashboard = ({ games, setGames }) => {
   };
 
   useEffect(() => {
-  (async () => {
-    const products = await getAdminProducts();
-    setGames(products);
-  })();
-}, []);
+    (async () => {
+      const products = await getAdminProducts();
+      setGames(products);
+    })();
+  }, []);
 
   // New Product Form State
   const [newProduct, setNewProduct] = useState({
     title: '',
     slug: '',
     publisher: '',
-    category: 'Mobile Games',
+    category: 'MOBA',
     type: 'topup',
     platform: 'mobile',
     image_url: '',
@@ -89,79 +89,79 @@ const AdminDashboard = ({ games, setGames }) => {
 
   // for edit product form state
   const openEditModal = (product) => {
-  setEditProduct({
-    product_id: product.product_id,  
-    title: product.title ?? "",
-    slug: product.slug ?? "",
-    publisher: product.publisher ?? "",
-    category: product.category ?? "Mobile Games",
-    type: product.type ?? "topup",
-    platform: product.platform ?? "mobile",
-    image_url: product.image_url ?? "",
-    icon: product.icon ?? "🎮",
-  });
-  setIsEditProductModalOpen(true);
-};
-
-// data untuk createProduct
-const handleAddProduct = async (e) => {
-  e.preventDefault();
-
-  try {
-    await createProduct(newProduct);
-
-    const products = await getAdminProducts();
-    setGames(products);
-
-    setIsAddProductModalOpen(false);
-    setNewProduct({
-      title: "",
-      slug: "",
-      publisher: "",
-      category: "Mobile Games",
-      type: "topup",
-      platform: "mobile",
-      image_url: "",
-      icon: "🎮"
+    setEditProduct({
+      product_id: product.product_id,
+      title: product.title ?? "",
+      slug: product.slug ?? "",
+      publisher: product.publisher ?? "",
+      category: product.category ?? "MOBA",
+      type: product.type ?? "topup",
+      platform: product.platform ?? "mobile",
+      image_url: product.image_url ?? "",
+      icon: product.icon ?? "🎮",
     });
+    setIsEditProductModalOpen(true);
+  };
 
-  } catch (err) {
-    alert(err.message);
-  }
-};
+  // data untuk createProduct
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
 
-const refreshProducts = async () => {
-  const products = await getAdminProducts();
-  setGames(products);
-};
+    try {
+      await createProduct(newProduct);
 
-const handleDisableProduct = async (game) => {
-  try {
-    await disableProduct(game.product_id);
-    await refreshProducts();
-  } catch (err) {
-    alert(err.message);
-  }
-};
+      const products = await getAdminProducts();
+      setGames(products);
 
-const handleDeleteProduct = async (game) => {
-  try {
-    await deleteProduct(game.product_id);
-    await refreshProducts();
-  } catch (err) {
-    alert(err.message);
-  }
-};
+      setIsAddProductModalOpen(false);
+      setNewProduct({
+        title: "",
+        slug: "",
+        publisher: "",
+        category: "",
+        type: "",
+        platform: "",
+        image_url: "",
+        icon: "🎮"
+      });
 
-const handleEnableProduct = async (game) => {
-  try {
-    await enableProduct(game.product_id);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const refreshProducts = async () => {
     const products = await getAdminProducts();
     setGames(products);
-  } catch (err) {
-    alert(err.message);
-  }
-};
+  };
+
+  const handleDisableProduct = async (game) => {
+    try {
+      await disableProduct(game.product_id);
+      await refreshProducts();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteProduct = async (game) => {
+    try {
+      await deleteProduct(game.product_id);
+      await refreshProducts();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleEnableProduct = async (game) => {
+    try {
+      await enableProduct(game.product_id);
+      const products = await getAdminProducts();
+      setGames(products);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
 
 
@@ -194,7 +194,7 @@ const handleEnableProduct = async (game) => {
 
           {/* MAIN CONTENT */}
           <div className="flex-1">
-            <div className="flex justify-between items-center mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-8">
               <h1 className="text-2xl font-bold text-white">{getHeaderTitle()} Overview</h1>
               <div className="flex gap-3">
                 <button className="bg-slate-800 text-white px-4 py-2 rounded-lg text-sm border border-slate-700 hover:bg-slate-700 flex items-center gap-2">
@@ -216,7 +216,7 @@ const handleEnableProduct = async (game) => {
               <Route path="overview" element={<DashboardTab />} />
               <Route path="strategy" element={<StrategyTab />} />
               <Route path="orders/*" element={<OrdersTab />} />
-              <Route path="products/*" element={<ProductsTab games={games} setGames={setGames} onEdit={openEditModal} onDisable={handleDisableProduct} onDelete={handleDeleteProduct} onEnable={handleEnableProduct}/>} />
+              <Route path="products/*" element={<ProductsTab games={games} setGames={setGames} onEdit={openEditModal} onDisable={handleDisableProduct} onDelete={handleDeleteProduct} onEnable={handleEnableProduct} />} />
               <Route path="customers/*" element={<CustomersTab />} />
               <Route path="settings/*" element={<SettingsTab />} />
             </Routes>
@@ -351,151 +351,152 @@ const handleEnableProduct = async (game) => {
               </div>
             </div>
           )}
+
           {isEditProductModalOpen && editProduct && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-            <div className="bg-[#131122] rounded-2xl p-6 w-full max-w-lg border border-[#282442] shadow-2xl relative">
-              <button
-                onClick={() => setIsEditProductModalOpen(false)}
-                className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-[#1d1936]"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-[#131122] rounded-2xl p-6 w-full max-w-lg border border-[#282442] shadow-2xl relative">
+                <button
+                  onClick={() => setIsEditProductModalOpen(false)}
+                  className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-[#1d1936]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
 
-              <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Package className="w-6 h-6 text-cyan-400" /> Edit Product
-              </h2>
+                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                  <Package className="w-6 h-6 text-cyan-400" /> Edit Product
+                </h2>
 
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  try {
-                    await updateProduct(editProduct.product_id, editProduct);
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    try {
+                      await updateProduct(editProduct.product_id, editProduct);
 
-                    const products = await getAdminProducts();
-                    setGames(products);
+                      const products = await getAdminProducts();
+                      setGames(products);
 
-                    setIsEditProductModalOpen(false);
-                    setEditProduct(null);
-                  } catch (err) {
-                    alert(err.message);
-                  }
-                }}
-                className="space-y-4"
-              >
-                <div className="grid grid-cols-2 gap-4">
+                      setIsEditProductModalOpen(false);
+                      setEditProduct(null);
+                    } catch (err) {
+                      alert(err.message);
+                    }
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Product Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={editProduct.title}
+                        onChange={(e) => {
+                          const title = e.target.value;
+                          const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+                          setEditProduct({ ...editProduct, title, slug });
+                        }}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Slug (URL)</label>
+                      <input
+                        type="text"
+                        required
+                        value={editProduct.slug}
+                        onChange={(e) => setEditProduct({ ...editProduct, slug: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Publisher</label>
+                      <input
+                        type="text"
+                        required
+                        value={editProduct.publisher}
+                        onChange={(e) => setEditProduct({ ...editProduct, publisher: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Category</label>
+                      <select
+                        value={editProduct.category}
+                        onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option>MOBA</option>
+                        <option>FPS</option>
+                        <option>Battle Royale</option>
+                        <option>RPG</option>
+                        <option>Sandbox</option>
+                        <option>Service</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Platform</label>
+                      <select
+                        value={editProduct.platform}
+                        onChange={(e) => setEditProduct({ ...editProduct, platform: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option value="mobile">Mobile</option>
+                        <option value="pc">PC</option>
+                        <option value="service">Service</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">Type</label>
+                      <select
+                        value={editProduct.type}
+                        onChange={(e) => setEditProduct({ ...editProduct, type: e.target.value })}
+                        className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      >
+                        <option value="topup">Direct Top Up (ID)</option>
+                        <option value="login">Login Method</option>
+                        <option value="joki">Joki / Boosting</option>
+                      </select>
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-sm text-slate-400 mb-1">Product Name</label>
+                    <label className="block text-sm text-slate-400 mb-1">Image URL (Optional)</label>
                     <input
                       type="text"
-                      required
-                      value={editProduct.title}
-                      onChange={(e) => {
-                        const title = e.target.value;
-                        const slug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-                        setEditProduct({ ...editProduct, title, slug });
-                      }}
+                      value={editProduct.image_url}
+                      onChange={(e) => setEditProduct({ ...editProduct, image_url: e.target.value })}
                       className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Slug (URL)</label>
-                    <input
-                      type="text"
-                      required
-                      value={editProduct.slug}
-                      onChange={(e) => setEditProduct({ ...editProduct, slug: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Publisher</label>
-                    <input
-                      type="text"
-                      required
-                      value={editProduct.publisher}
-                      onChange={(e) => setEditProduct({ ...editProduct, publisher: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Category</label>
-                    <select
-                      value={editProduct.category}
-                      onChange={(e) => setEditProduct({ ...editProduct, category: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                  <div className="pt-4 flex gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setIsEditProductModalOpen(false)}
+                      className="flex-1 py-3 bg-[#1d1936] text-slate-300 rounded-xl text-sm font-bold hover:bg-[#282442]"
                     >
-                      <option>MOBA</option>
-                      <option>FPS</option>
-                      <option>Battle Royale</option>
-                      <option>RPG</option>
-                      <option>Sandbox</option>
-                      <option>Service</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Platform</label>
-                    <select
-                      value={editProduct.platform}
-                      onChange={(e) => setEditProduct({ ...editProduct, platform: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 py-3 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-500"
                     >
-                      <option value="mobile">Mobile</option>
-                      <option value="pc">PC</option>
-                      <option value="service">Service</option>
-                    </select>
+                      Save Changes
+                    </button>
                   </div>
-
-                  <div>
-                    <label className="block text-sm text-slate-400 mb-1">Type</label>
-                    <select
-                      value={editProduct.type}
-                      onChange={(e) => setEditProduct({ ...editProduct, type: e.target.value })}
-                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
-                    >
-                      <option value="topup">Direct Top Up (ID)</option>
-                      <option value="login">Login Method</option>
-                      <option value="joki">Joki / Boosting</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">Image URL (Optional)</label>
-                  <input
-                    type="text"
-                    value={editProduct.image_url}
-                    onChange={(e) => setEditProduct({ ...editProduct, image_url: e.target.value })}
-                    className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-cyan-500 outline-none"
-                  />
-                </div>
-
-                <div className="pt-4 flex gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsEditProductModalOpen(false)}
-                    className="flex-1 py-3 bg-[#1d1936] text-slate-300 rounded-xl text-sm font-bold hover:bg-[#282442]"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="flex-1 py-3 bg-cyan-600 text-white rounded-xl text-sm font-bold hover:bg-cyan-500"
-                  >
-                    Save Changes
-                  </button>
-                </div>
-              </form>
+                </form>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </div>
       </div>
     </div>

@@ -455,9 +455,22 @@ export default function App() {
                 <div className="flex items-end justify-between mb-8">
                   <div><h2 className="text-3xl font-bold text-white flex items-center gap-2"><Flame className="text-orange-500 fill-orange-500" /> Popular Now</h2><p className="text-slate-400 mt-2">Top selling games in Malaysia this week.</p></div>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-6">
-                  {filteredGames.map((game) => (<GameCard key={game.id} game={game} onClick={() => navigate(`/checkout/${game.slug}`)} />))}
-                </div>
+                {filteredGames.length === 0 ? (
+                  <div className="text-center py-16 text-slate-400">
+                    <p className="text-lg font-semibold">No games found</p>
+                    <p className="text-sm mt-2">Try selecting another category.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {filteredGames.map((game) => (
+                      <GameCard
+                        key={game.id}
+                        game={game}
+                        onClick={() => navigate(`/checkout/${game.slug}`)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
               {/* Promo Banner */}
               <div className="relative rounded-3xl overflow-hidden bg-linear-to-r from-blue-900 to-[#0B1D3A] border border-blue-800 mb-20">
