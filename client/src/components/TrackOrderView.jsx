@@ -40,7 +40,7 @@ export default function TrackOrderView({ onBack }) {
               <Package className="absolute left-3 top-3.5 w-5 h-5 text-slate-500" />
             </div>
           </div>
-          <button type="submit" disabled={loading || !orderId} className={`w-full py-3.5 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${loading ? 'bg-slate-700 cursor-wait' : 'bg-linear-to-r from-blue-600 to-cyan-500 hover:shadow-lg hover:shadow-cyan-500/25'}`}>
+          <button type="submit" disabled={loading || !orderId} className={`w-full py-3.5 rounded-xl font-bold text-white transition-all flex items-center justify-center gap-2 ${loading ? 'bg-slate-700 cursor-wait' : 'bg-gradient-to-r from-blue-600 to-cyan-500 hover:shadow-lg hover:shadow-cyan-500/25'}`}>
             {loading ? <><span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Checking...</> : <>Check Status <ArrowRight className="w-5 h-5" /></>}
           </button>
         </form>
