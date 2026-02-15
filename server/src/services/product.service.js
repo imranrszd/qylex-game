@@ -1,4 +1,5 @@
 const pool = require("../db/pool");
+const { productDetail, normalizeProductDetailToVariations } = require("./moogold.service");
 
 // GET /api/products
 async function listProducts() {
@@ -50,41 +51,47 @@ async function createProduct(data) {
     category,
     type,
     platform,
+    provider = null,
+    provider_product_id = null,
     is_active = true,
   } = data;
 
-  if (!title || !slug || !publisher ) {
-    const err = new Error("title, slug, publisher are required !");
-    err.status = 400;
-    throw err;
+  if (!title || !slug || !publisher) {
+    const e = new Error("title, slug, publisher are required !");
+    e.status = 400;
+    throw e;
   }
 
   try {
-    const {rows} = await pool.query(
+    
+    const { rows } = await pool.query(
       `
-      INSERT INTO products (title, slug, image_url, publisher, category, type, platform, is_active)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-      RETURNING product_id, title, slug, image_url, publisher, category, type, platform, is_active
+      INSERT INTO products
+        (title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      RETURNING
+        product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
       `,
-      [title, slug, image_url, publisher, category, type, platform, is_active]
-    )
+      [title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active]
+    );
 
     return rows[0];
   } catch (err) {
-    if (e.code === "23505") {
-      const err = new Error("Slug already exists");
-      err.status = 409;
-      throw err;
+    if (err.code === "23505") {
+      const e = new Error("Slug already exists");
+      e.status = 409;
+      throw e;
     }
+    throw err;
   }
-  throw e;
 }
 
 async function updateProduct(id, data) {
-  // First: check product exists
   const existingRes = await pool.query(
     `
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active
+    SELECT product_id, title, slug, image_url, publisher, category, type, platform,
+           provider, provider_product_id, is_active
     FROM products
     WHERE product_id = $1
     LIMIT 1
@@ -100,7 +107,6 @@ async function updateProduct(id, data) {
 
   const existing = existingRes.rows[0];
 
-  // Keep old values if not provided (safe partial update)
   const updatedData = {
     title: data.title ?? existing.title,
     slug: data.slug ?? existing.slug,
@@ -109,10 +115,12 @@ async function updateProduct(id, data) {
     category: data.category ?? existing.category,
     type: data.type ?? existing.type,
     platform: data.platform ?? existing.platform,
+    provider: data.provider ?? existing.provider,
+    provider_product_id: data.provider_product_id ?? existing.provider_product_id,
+
     is_active: data.is_active ?? existing.is_active,
   };
 
-  // Validate minimum fields (optional but recommended)
   if (!updatedData.title || !updatedData.slug || !updatedData.publisher) {
     const err = new Error("title, slug, publisher are required !");
     err.status = 400;
@@ -130,10 +138,13 @@ async function updateProduct(id, data) {
           category = $5,
           type = $6,
           platform = $7,
-          is_active = $8,
+          provider = $8,
+          provider_product_id = $9,
+          is_active = $10,
           updated_at = NOW()
-      WHERE product_id = $9
-      RETURNING product_id, title, slug, image_url, publisher, category, type, platform, is_active
+      WHERE product_id = $11
+      RETURNING product_id, title, slug, image_url, publisher, category, type, platform,
+                provider, provider_product_id, is_active
       `,
       [
         updatedData.title,
@@ -143,6 +154,8 @@ async function updateProduct(id, data) {
         updatedData.category,
         updatedData.type,
         updatedData.platform,
+        updatedData.provider,
+        updatedData.provider_product_id,
         updatedData.is_active,
         id,
       ]
@@ -180,10 +193,6 @@ async function disableProduct(id) {
   return rows[0];
 }
 
-/**
- * DELETE /api/admin/products/:id
- * Permanent delete (only use if safe)
- */
 async function deleteProduct(id) {
   const res = await pool.query(
     `
@@ -233,4 +242,251 @@ async function listAllProducts() {
   return rows;
 }
 
-module.exports = { listProducts, getProductBySlug, createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProducts };
+
+// Setup Price Card
+function extractItemAmount(name) {
+
+  const m = String(name).match(/\d+/);
+  return m ? parseInt(m[0], 10) : 1; 
+}
+
+function calcSellingPrice(costPrice, markupPercent) {
+  const cost = Number(costPrice || 0);
+  const pct = Math.max(0, Number(markupPercent ?? 0));
+  const selling = cost * (1 + pct / 100);
+  return Number(selling.toFixed(2));
+}
+
+async function upsertPriceCard(productId, provider, variation, opts = {}) {
+  const markupPercent = Number.isFinite(Number(opts.markupPercent))
+    ? Number(opts.markupPercent)
+    : 20;
+
+  const existing = await pool.query(
+    `
+    SELECT price_id
+    FROM price_cards
+    WHERE product_id = $1
+      AND provider = $2
+      AND provider_variation_id = $3
+    LIMIT 1
+    `,
+    [productId, provider, variation.provider_variation_id]
+  );
+
+  // ✅ UPDATE supplier fields only (protect manual price/original_price)
+  if (existing.rows.length > 0) {
+    const existingPriceId = existing.rows[0].price_id;
+
+    const { rows } = await pool.query(
+      `
+      UPDATE price_cards
+      SET cost_price = $1,
+          is_active = $2,
+          item_label = $3,
+          updated_at = NOW()
+      WHERE price_id = $4
+      RETURNING *
+      `,
+      [
+        Number(variation.cost_price),
+        variation.stock_status === "instock",
+        variation.name,
+        existingPriceId,
+      ]
+    );
+
+    return { row: rows[0], action: "updated" };
+  }
+
+  // INSERT new variation (apply markup on first sync)
+  const itemAmount = extractItemAmount(variation.name);
+  const sellingPrice = calcSellingPrice(variation.cost_price, markupPercent);
+
+  const { rows } = await pool.query(
+    `
+    INSERT INTO price_cards
+      (product_id, sku, item_amount, item_label, price, original_price, cost_price,
+       provider, provider_variation_id, is_active)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    RETURNING *
+    `,
+    [
+      productId,
+      `${provider}_${variation.provider_variation_id}`, // safer SKU
+      itemAmount,
+      variation.name,
+      sellingPrice,
+      null,
+      Number(variation.cost_price),
+      provider,
+      variation.provider_variation_id,
+      variation.stock_status === "instock",
+    ]
+  );
+
+  return { row: rows[0], action: "inserted" };
+}
+
+async function syncSupplierPriceCards(productId, opts = {}) {
+  const productRes = await pool.query(
+    `SELECT product_id, provider, provider_product_id FROM products WHERE product_id = $1 LIMIT 1`,
+    [productId]
+  );
+
+  if (productRes.rows.length === 0) {
+    const err = new Error("Product not found");
+    err.status = 404;
+    throw err;
+  }
+
+  const product = productRes.rows[0];
+
+  if (!product.provider || !product.provider_product_id) {
+    const err = new Error("Supplier not configured (provider/provider_product_id missing)");
+    err.status = 400;
+    throw err;
+  }
+
+  // markup from request (default 20)
+  const markupPercent = Number.isFinite(Number(opts.markup_percent))
+    ? Number(opts.markup_percent)
+    : 20;
+
+  const provider = String(product.provider).toLowerCase();
+
+  let variations = [];
+  if (provider === "moogold") {
+    const raw = await productDetail(product.provider_product_id);
+    variations = normalizeProductDetailToVariations(raw);
+  } else {
+    const err = new Error(`Unsupported provider: ${product.provider}`);
+    err.status = 400;
+    throw err;
+  }
+
+  const results = { inserted: 0, updated: 0, total: variations.length };
+
+  for (const v of variations) {
+    const r = await upsertPriceCard(product.product_id, provider, v, { markupPercent });
+    if (r.action === "inserted") results.inserted += 1;
+    if (r.action === "updated") results.updated += 1;
+  }
+
+  return results;
+}
+
+// nak hantar pricelist untuk product 
+async function listProductPackages(productId) {
+  const { rows } = await pool.query(
+    `
+    SELECT
+      price_id,
+      sku,
+      item_amount,
+      item_label,
+      price,
+      original_price,
+      cost_price,
+      provider,
+      provider_variation_id,
+      is_active
+    FROM price_cards
+    WHERE product_id = $1
+    ORDER BY price ASC NULLS LAST
+    `,
+    [productId]
+  );
+  return rows;
+}
+
+// nak update
+async function updateProductPackages(productId, packages) {
+  // Ensure product exists
+  const p = await pool.query(`SELECT product_id FROM products WHERE product_id = $1`, [productId]);
+  if (p.rows.length === 0) {
+    const err = new Error("Product not found");
+    err.status = 404;
+    throw err;
+  }
+
+  const results = { inserted: 0, updated: 0, total: packages.length };
+
+  for (const pkg of packages) {
+    const priceId = pkg.price_id || pkg.priceId || pkg.id || null;
+
+    const payload = {
+      sku: pkg.sku ?? null,
+      item_amount: Number.isFinite(Number(pkg.item_amount)) ? Number(pkg.item_amount) : 1,
+      item_label: pkg.item_label ?? pkg.name ?? null,
+      price: Number(pkg.price ?? 0),
+      original_price: Number(pkg.original_price ?? pkg.original ?? 0),
+      cost_price: Number(pkg.cost_price ?? 0),
+      provider: pkg.provider ?? null,
+      provider_variation_id: pkg.provider_variation_id ?? null,
+      is_active: pkg.is_active !== false,
+    };
+
+    if (priceId && !String(priceId).startsWith("new_")) {
+      // UPDATE
+      const { rowCount } = await pool.query(
+        `
+        UPDATE price_cards
+        SET sku = $1,
+            item_amount = $2,
+            item_label = $3,
+            price = $4,
+            original_price = $5,
+            cost_price = $6,
+            is_active = $7,
+            updated_at = NOW()
+        WHERE price_id = $8 AND product_id = $9
+        `,
+        [
+          payload.sku,
+          payload.item_amount,
+          payload.item_label,
+          payload.price,
+          payload.original_price,
+          payload.cost_price,
+          payload.is_active,
+          priceId,
+          productId,
+        ]
+      );
+
+      if (rowCount > 0) results.updated += 1;
+      continue;
+    }
+
+    // INSERT (new row)
+    await pool.query(
+      `
+      INSERT INTO price_cards
+        (product_id, sku, item_amount, item_label, price, original_price, cost_price,
+         provider, provider_variation_id, is_active)
+      VALUES
+        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+      `,
+      [
+        productId,
+        payload.sku,
+        payload.item_amount,
+        payload.item_label,
+        payload.price,
+        payload.original_price,
+        payload.cost_price,
+        payload.provider,
+        payload.provider_variation_id,
+        payload.is_active,
+      ]
+    );
+
+    results.inserted += 1;
+  }
+
+  return results;
+}
+
+module.exports = { listProducts, getProductBySlug, createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProducts, syncSupplierPriceCards,upsertPriceCard, listProductPackages, updateProductPackages };

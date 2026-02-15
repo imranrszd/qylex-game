@@ -90,5 +90,50 @@ async function listAllProductsAdmin(req, res, next) {
   }
 }
 
+async function syncSupplierPriceCards(req, res, next) {
+  try {
+    const { id } = req.params;
+    const { markup_percent } = req.body || {};
 
-module.exports = { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProductsAdmin }
+    const result = await productService.syncSupplierPriceCards(id, { markup_percent });
+
+    return res.status(200).json({
+      message: "Supplier synced successfully",
+      data: result,
+    });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ message: err.message });
+    next(err);
+  }
+}
+
+// add endpoint to fetch price_cards by product
+async function listProductPackages(req, res, next) {
+  try {
+    const { id } = req.params;
+    const rows = await productService.listProductPackages(id);
+    return res.status(200).json({ data: rows });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// update endpoint to fetch price_cards by product
+async function updateProductPackages(req, res, next) {
+  try {
+    const { id } = req.params;
+    const packages = Array.isArray(req.body) ? req.body : [];
+
+    const result = await productService.updateProductPackages(id, packages);
+
+    return res.status(200).json({
+      message: "Packages updated successfully",
+      data: result,
+    });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ message: err.message });
+    next(err);
+  }
+}
+
+module.exports = { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProductsAdmin, syncSupplierPriceCards, listProductPackages,updateProductPackages }

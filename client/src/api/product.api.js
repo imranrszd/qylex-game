@@ -49,7 +49,7 @@ export async function getPackages() {
     throw new Error(json.message || "Failed to fetch packages");
   }
 
-  return json.data; // assuming your backend wraps it in { data: [...] }
+  return json.data;
 }
 
 // Create packages for a product
@@ -127,8 +127,29 @@ export async function enableProduct(product_id) {
   return json;
 }
 
+// Dapatkan Product untuk admin sahaja
 export async function getAdminProducts() {
   const res = await fetch(`${API_BASE}/admin/products`);
   const json = await res.json();
+  return json.data;
+}
+
+// Untuk Dapatkan Pricelist dari supplier
+export async function syncSupplierPriceCards(product_id, markup_percent) {
+  const res = await fetch(`${API_BASE}/admin/products/${product_id}/sync-supplier`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ markup_percent: Number(markup_percent) }),
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to sync supplier");
+  return json;
+}
+
+export async function getProductPackages(product_id) {
+  const res = await fetch(`${API_BASE}/admin/products/${product_id}/packages`);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Failed to fetch packages");
   return json.data;
 }

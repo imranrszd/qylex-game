@@ -1,6 +1,6 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { createProduct, updateProduct, createPackages, updatePackages, disableProduct, deleteProduct, enableProduct, getAdminProducts } from '../../api/product.api';
+import { createProduct, updateProduct, createPackages, updatePackages, disableProduct, deleteProduct, enableProduct, getAdminProducts, syncSupplierPriceCards, getProductPackages  } from '../../api/product.api';
 
 import {
   Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
@@ -174,6 +174,23 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
     setEditingProduct(null);
   };
 
+const normalizePackagesForApi = (pkgs) =>
+  pkgs.map(p => ({
+    // kalau backend expect id "price_id"
+    price_id: String(p.id || "").startsWith("new_") ? null : (p.price_id ?? p.id),
+
+    sku: p.sku ?? null,
+    item_label: p.item_label ?? p.name ?? "",
+    item_amount: Number.isFinite(Number(p.item_amount)) ? Number(p.item_amount) : 1,
+
+    price: Number(p.price || 0),
+    original_price: Number(p.original_price ?? p.original ?? 0),
+    cost_price: Number(p.cost_price || 0),
+
+    is_active: p.is_active !== false,
+    provider: p.provider ?? null,
+    provider_variation_id: p.provider_variation_id ?? null,
+  }));
 
   return (
     <div className="min-h-screen bg-[#0B1D3A] pt-24 pb-12">
@@ -513,40 +530,42 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
             <ProductEditorModal
               product={editingGame.product_id ? editingGame : null}
               currentPackages={editingGame.product_id ? (productPackages[editingGame.product_id] || []) : []}
-              // onSaveProduct={(details) => {
-              //   let productId = editingGame.product_id;
-              //   if (productId) {
-              //     // Update existing
-              //     setGames(games.map(g => g.product_id === productId ? { ...g, ...details } : g));
-              //   } else {
-              //     // Create new
-              //     productId = Math.floor(Math.random() * 100000);
-              //     const newGame = { ...details, product_id: productId };
-              //     setGames([...games, newGame]);
-              //     setProductPackages(prev => ({ ...prev, [productId]: [] }));
-              //   }
-              //   // We update the editingGame so next time we save packages it has an ID
-              //   setEditingGame({ ...details, product_id: productId });
-              // }}
-              // onSavePackages={(pkgs) => {
-              //   // This runs after product save, so we rely on the state update if sequential
-              //   // But in this unified modal, we can actually pass a consolidated onSave prop to handle both atomically
-              // }}
-              // Better approach: Unified Handler
+
               onSave={async (details, pkgs) => {
-                let productId = editingGame?.product_id;
+                try {
+                  let productId = editingGame?.product_id;
 
-                if (productId) {
-                  await updateProduct(productId, details);
-                  await updatePackages(productId, pkgs);
-                } else {
-                  const created = await createProduct(details);
-                  productId = created.product_id;
-                  await createPackages(productId, pkgs);
+                  // const pkgPayload = normalizePackagesForApi(pkgs);
+                  const pkgPayload = pkgs;
+
+                  if (productId) {
+                    await updateProduct(productId, details);
+                    await updatePackages(productId, pkgPayload);
+                  } else {
+                    const created = await createProduct(details);
+                    productId = created.data?.product_id || created.product_id; // usually created.data.product_id
+                  }
+
+                  await updatePackages(productId, pkgPayload);
+                  const refreshed = await getAdminProducts();
+                  setGames(refreshed);
+
+                } catch (err) {
+                  console.error("SAVE FAILED:", err);
+                  alert(`❌ Save failed: ${err.message || err}`);
+                  throw err; // important: so modal can also catch if you add try/catch there
                 }
+              }}
 
-                const refreshed = await getAdminProducts();
-                setGames(refreshed);
+              onSyncSupplier={async ({ productId, markupPercent }) => {
+                await syncSupplierPriceCards(productId, markupPercent);
+                const latest = await getProductPackages(productId);
+                return latest; // return rows to modal
+              }}
+
+              onLoadPackages={async (productId) => {
+                const latest = await getProductPackages(productId);
+                return latest;
               }}
 
               onClose={() => setEditingGame(null)}

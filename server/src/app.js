@@ -7,6 +7,7 @@ const productsRoutes = require("./routes/products.routes"); // semua api/product
 const adminRoutes = require("./routes/admin.routers"); // admin auth
 const adminProductsRoutes = require("./routes/admin.products.routes"); // crud admin product
 const adminSuppliersRoutes = require("./routes/admin.suppliers.routes");
+const validateRoutes = require("./routes/validate.routes");
 
 const app = express();
 
@@ -22,6 +23,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // public
 app.use("/api", ordersRoutes); // kalau dalam route ada mcm router.post("/orders") dia akan jadi url mcmni /api/orders
 app.use("/api", productsRoutes);
+app.use("/api/validate", validateRoutes);
 
 // admin
 app.use("/api/admin", adminRoutes); 
