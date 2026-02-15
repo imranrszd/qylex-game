@@ -61,9 +61,9 @@ export default function Navbar({ user, onLogout }) {
                   </Link>
                 )}
 
-                <button onClick={onLogout} className="text-slate-400 hover:text-white flex items-center gap-1 text-sm">
+                {/* <button onClick={onLogout} className="text-slate-400 hover:text-white flex items-center gap-1 text-sm">
                   <LogOut className="w-5 h-5" /> Logout
-                </button>
+                </button> */}
               </div>
             ) : (
               <button

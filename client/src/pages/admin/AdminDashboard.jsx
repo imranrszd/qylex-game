@@ -43,7 +43,7 @@ const DashboardTab = () => (
 );
 
 // --- MAIN DASHBOARD ---
-const AdminDashboard = ({ games, setGames }) => {
+const AdminDashboard = ({ games, setGames, onLogout }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -186,7 +186,7 @@ const AdminDashboard = ({ games, setGames }) => {
                   </NavLink>
                 ))}
               </nav>
-              <button onClick={() => navigate('/')} className="w-full flex items-center gap-3 px-4 py-3 mt-8 text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
+              <button onClick={onLogout} className="w-full flex items-center gap-3 px-4 py-3 mt-8 text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
                 <LogOut className="w-5 h-5" /> Logout
               </button>
             </div>

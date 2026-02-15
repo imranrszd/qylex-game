@@ -391,6 +391,8 @@ const THEME = {
 
 export default function App() {
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     fetch("http://localhost:5000/api/products")
       .then(res => res.json())
@@ -423,7 +425,7 @@ export default function App() {
     localStorage.removeItem('qylex_user');
 
     setUser(null);
-    navigate('/login', { replace: true });
+    navigate('/', { replace: true });
   };
 
   const handleLoginSuccess = (userData) => {
@@ -438,7 +440,7 @@ export default function App() {
 
   return (
     <div className="bg-[#0B1D3A] min-h-screen font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
-      <Navbar user={user} onLogout={handleLogout} />
+      <Navbar user={user} />
       {/* {view === 'home' ? ( */}
       <Routes>
         {/* HOME */}
@@ -518,7 +520,7 @@ export default function App() {
           path="/admin/dashboard/*"
           element={
             isAdminAuthenticated
-              ? <AdminDashboard onBack={() => setIsAdminAuthenticated(false)} games={games} setGames={setGames} />
+              ? <AdminDashboard onBack={() => setIsAdminAuthenticated(false)} games={games} setGames={setGames} onLogout={handleLogout} />
               : <Navigate to="/admin" replace />
           }
         />
