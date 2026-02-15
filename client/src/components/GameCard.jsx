@@ -19,10 +19,10 @@ export default function GameCard({ game, onClick }) {
       <div className="p-5">
         <h3 className="text-xl font-bold text-white group-hover:text-cyan-400 transition-colors">{game.title}</h3>
         <p className="text-slate-400 text-sm mt-1">{game.publisher}</p>
-        <div className="mt-4 flex items-center justify-between">
+        <div className="mt-4 flex flex-col md:flex-row gap-3 md:gap-0 items-start md:items-center justify-between">
           <span className={`px-2 py-1 rounded text-xs font-medium border border-slate-700 ${game.category === 'Service' ? 'bg-purple-900/50 text-purple-300 border-purple-500/30' : 'bg-slate-800 text-slate-400'}`}>{game.category}</span>
           <span className="text-cyan-400 text-sm font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-            {game.type === 'joki' ? 'Boost' : game.type === 'login' ? 'Login' : 'Top Up'} <ChevronRight className="w-4 h-4" />
+            {game.type === 'joki' ? 'Boost' : 'Top Up'} <ChevronRight className="w-4 h-4" />
           </span>
         </div>
       </div>

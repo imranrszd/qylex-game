@@ -1,9 +1,15 @@
 import { useState } from "react";
 import { Edit, MoreVertical, Trash2 } from "lucide-react";
+import EditPackagesModal from "../../components/EditPackageModal";
+import {
+  INITIAL_PACKAGES
+} from '../../data/Packages';
 
 const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editingGame, setEditingGame] = useState(null);
+  const [productPackages, setProductPackages] = useState(INITIAL_PACKAGES);
 
   return (
     <>
@@ -11,11 +17,10 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
         {games.map((game) => (
           <div
             key={game.product_id}
-            className={`bg-[#1F2937] rounded-2xl border overflow-hidden transition-all ${
-              game.is_active
-                ? "border-slate-700 hover:border-cyan-500/50"
-                : "border-red-500/40 opacity-75"
-            }`}
+            className={`bg-[#1F2937] rounded-2xl border overflow-hidden transition-all ${game.is_active
+              ? "border-slate-700 hover:border-cyan-500/50"
+              : "border-red-500/40 opacity-75"
+              }`}
           >
             <div
               className="h-32 bg-cover bg-center bg-white relative"
@@ -106,7 +111,10 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
               <p className="text-slate-400 text-sm mb-4">Publisher: {game.publisher}</p>
 
               <div className="flex gap-2">
-                <button className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600">
+                <button
+                  onClick={() => setEditingGame(game)}
+                  className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600"
+                >
                   Edit Price
                 </button>
 
@@ -166,6 +174,21 @@ const ProductsTab = ({ games, onEdit, onDelete, onDisable, onEnable }) => {
             </div>
           </div>
         </div>
+      )}
+      {/* EDIT PACKAGES MODAL */}
+      {editingGame && (
+        <EditPackagesModal
+          game={editingGame}
+          currentPackages={productPackages[editingGame.product_id]}
+          onSave={(newPkgs) => {
+            setProductPackages({
+              ...productPackages,
+              [editingGame.product_id]: newPkgs
+            });
+            setEditingGame(null);
+          }}
+          onClose={() => setEditingGame(null)}
+        />
       )}
     </>
   );
