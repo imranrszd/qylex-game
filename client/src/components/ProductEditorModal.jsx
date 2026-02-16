@@ -20,6 +20,9 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
     provider: product?.provider || 'mooGold', // Supplier Settings
     provider_product_id: product?.provider_product_id || '',      // Supplier Product ID
     markupPercent: 20,
+    requires_validation: product?.requires_validation || false,
+    validation_provider: product?.validation_provider || '',
+    validation_game_code: product?.validation_game_code || '',
   });
 
   // Packages State
@@ -81,6 +84,9 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       provider: product.provider || "moogold",
       provider_product_id: product.provider_product_id || "",
       markupPercent: 20,
+      requires_validation: product.requires_validation || false,
+      validation_provider: product.validation_provider || "",
+      validation_game_code: product.validation_game_code || "",
     });
   }, [product]);
 
@@ -328,18 +334,60 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                       <RefreshCw className="w-3 h-3" /> Sync Now
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-4 mt-6 mb-2">
-                    <div>
-                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Requires Validation</label>
-                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                  <div className="grid grid-cols-3 gap-4 mt-6 mb-2 items-end">
+                    {/* Checkbox Input */}
+                    <div className="flex flex-col h-full justify-center">
+                      <span className="block text-xs text-slate-400 mb-2 uppercase tracking-wider">
+                        Validation Status
+                      </span>
+
+                      <label
+                        className={`flex items-center h-[38px] px-3 rounded-lg border transition-all cursor-pointer ${details.requires_validation
+                          ? 'border-orange-500 bg-orange-500/5'
+                          : 'border-[#282442] bg-[#131122] hover:border-slate-700'}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={details.requires_validation}
+                          onChange={(e) => setDetails({ ...details, requires_validation: e.target.checked })}
+                          className="w-4 h-4 accent-orange-500 cursor-pointer"
+                        />
+                        <span className={`ml-3 text-sm font-medium transition-colors ${details.requires_validation ? 'text-white' : 'text-slate-400'}`}>
+                          Requires Validation
+                        </span>
+                      </label>
                     </div>
+
+                    {/* Validation Provider - Disabled if checkbox is unticked */}
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Validation Provider</label>
-                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                      <label className={`block text-xs mb-1 uppercase tracking-wider ${!details.requires_validation ? 'text-slate-600' : 'text-slate-400'}`}>
+                        Validation Provider
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!details.requires_validation}
+                        value={details.validation_provider}
+                        onChange={(e) => setDetails({ ...details, validation_provider: e.target.value })}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm outline-none transition-colors ${!details.requires_validation
+                          ? 'bg-slate-900/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                          : 'bg-[#131122] border-[#282442] text-white focus:border-orange-500'}`}
+                      />
                     </div>
+
+                    {/* Validation Game Code - Disabled if checkbox is unticked */}
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Validation Game Code</label>
-                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                      <label className={`block text-xs mb-1 uppercase tracking-wider ${!details.requires_validation ? 'text-slate-600' : 'text-slate-400'}`}>
+                        Validation Game Code
+                      </label>
+                      <input
+                        type="text"
+                        disabled={!details.requires_validation}
+                        value={details.validation_game_code}
+                        onChange={(e) => setDetails({ ...details, validation_game_code: e.target.value })}
+                        className={`w-full border rounded-lg px-3 py-2 text-sm outline-none transition-colors ${!details.requires_validation
+                          ? 'bg-slate-900/50 border-slate-800 text-slate-600 cursor-not-allowed'
+                          : 'bg-[#131122] border-[#282442] text-white focus:border-orange-500'}`}
+                      />
                     </div>
                   </div>
 
