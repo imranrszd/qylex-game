@@ -48,7 +48,6 @@ async function sendOrderToTelegram({ text, file, inlineKeyboard }) {
     form.append("reply_markup", JSON.stringify({ inline_keyboard: inlineKeyboard }));
   }
 
-  // Multer memoryStorage gives Buffer at file.buffer
   const blob = new Blob([file.buffer], { type: mimeType });
   const filename = file.originalname || (isPdf ? "receipt.pdf" : "receipt.jpg");
 
@@ -57,10 +56,10 @@ async function sendOrderToTelegram({ text, file, inlineKeyboard }) {
 
   const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${endpoint}`, {
     method: "POST",
-    body: form, // ✅ no manual headers needed
+    body: form,
   });
 
-  // Debug kalau telegram bagi 400 kosong lagi
+  // Debug kalau telegram bagi 400 kosong 
   const raw = await res.text();
   let json;
   try {

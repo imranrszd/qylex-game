@@ -9,7 +9,6 @@ exports.verifyManualPayment = async (req, res) => {
       return res.status(400).json({ ok: false, message: "action must be approve or reject" });
     }
 
-    // If you have admin auth, put admin user id here
     const verifiedBy = req.user?.user_id || null;
 
     const result = await setOrderPaymentStatus({ orderId, action, verifiedBy });

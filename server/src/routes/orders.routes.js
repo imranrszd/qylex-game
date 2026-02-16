@@ -4,7 +4,6 @@ const ordersController = require("../controllers/orders.controller");
 
 const router = express.Router();
 
-// Memory storage sebab kau nak terus forward ke Telegram (tak simpan file)
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {

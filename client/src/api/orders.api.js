@@ -1,4 +1,3 @@
-// orders.api.js
 const API_BASE = "http://localhost:5000/api";
 
 async function parseJsonSafe(res) {
@@ -7,7 +6,6 @@ async function parseJsonSafe(res) {
   try {
     return JSON.parse(text);
   } catch {
-    // Helpful debug if server returns HTML / empty
     throw new Error(`Non-JSON response. HTTP ${res.status}. Body: ${text.slice(0, 200)}`);
   }
 }
@@ -22,13 +20,13 @@ export async function createOrder({
   const fd = new FormData();
   fd.append("product_id", String(product_id));
   fd.append("account_payload", JSON.stringify(account_payload));
-  fd.append("cart", JSON.stringify(cart)); // array [{price_id, qty}]
+  fd.append("cart", JSON.stringify(cart)); 
   fd.append("contact_info", contact_info);
-  fd.append("receipt", receiptFile); // MUST match multer field name
+  fd.append("receipt", receiptFile); 
 
   const res = await fetch(`${API_BASE}/orders`, {
     method: "POST",
-    body: fd, // ❗ don't set headers
+    body: fd, 
   });
 
   const json = await parseJsonSafe(res);

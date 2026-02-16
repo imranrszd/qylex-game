@@ -1,9 +1,7 @@
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
-// optional: restrict who can click
 function isAllowedAdmin(fromId, chatId) {
-  // Only allow callback from the configured group chat
   return String(chatId) === String(CHAT_ID);
 }
 
@@ -27,9 +25,8 @@ async function tgApi(method, payload) {
 }
 
 function isAllowedAdmin(fromId, chatId) {
-  // simplest: only allow clicks from the same chat AND (optional) user allowlist
   if (String(chatId) !== String(CHAT_ID)) return false;
-  if (ADMIN_USER_IDS.length === 0) return true; // if not set, allow anyone in that chat
+  if (ADMIN_USER_IDS.length === 0) return true;
   return ADMIN_USER_IDS.includes(String(fromId));
 }
 
