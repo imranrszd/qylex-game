@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { X, Edit, Trash2, Save, PlusCircle, RefreshCw, } from 'lucide-react';
 import { uploadImage } from '../api/product.api';
 
 const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncSupplier, onLoadPackages }) => {
   const [activeTab, setActiveTab] = useState('details');
+  const [packages, setPackages] = useState(currentPackages || []);
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const contentRef = useRef(null);
 
   // Product Details State
   const [details, setDetails] = useState({
@@ -20,11 +23,16 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
   });
 
   // Packages State
-  const [packages, setPackages] = useState(currentPackages || []);
 
   useEffect(() => {
     setPackages(currentPackages || []);
   }, [currentPackages, product?.product_id]);
+
+  useEffect(() => {
+    if (activeTab === "packages" && contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   // ✅ Fetch latest from DB when user switches to Packages tab
   useEffect(() => {
@@ -32,6 +40,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       if (activeTab !== "packages") return;
       if (!product?.product_id) return;
       if (!onLoadPackages) return;
+      if (isPreviewMode) return;   // ✅ prevent overwrite
 
       try {
         const rows = await onLoadPackages(product.product_id);
@@ -51,12 +60,12 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
         );
       } catch (e) {
         console.error(e);
-        alert(`❌ Failed to load packages: ${e.message}`);
       }
     };
 
     load();
-  }, [activeTab, product?.product_id, onLoadPackages]);
+  }, [activeTab, product?.product_id, onLoadPackages, isPreviewMode]);
+
 
   useEffect(() => {
     if (!product) return;
@@ -99,37 +108,38 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       alert(`Successfully fetched 5 variations from ${details.provider}!`);
     }
   };
-
   const handleSyncPriceCards = async () => {
-    if (!product?.product_id) return alert("Please save product first (need product_id).");
-    if (!details.provider_product_id) return alert("Please enter Provider Product ID first.");
-
-    const ok = window.confirm(`Sync from ${details.provider} with markup ${details.markupPercent}%?`);
-    if (!ok) return;
+    if (!details.provider_product_id)
+      return alert("Please enter Provider Product ID first.");
 
     try {
       const rows = await onSyncSupplier({
         productId: product.product_id,
-        markupPercent: details.markupPercent
+        markupPercent: details.markupPercent,
+        preview: true   // important flag
       });
 
-      // Map DB rows → UI rows
-      setPackages(rows.map(r => ({
-        id: r.price_id,
-        sku: r.sku,
-        name: r.item_label,
-        price: Number(r.price || 0),
-        original: Number(r.original_price || 0),
-        cost_price: Number(r.cost_price || 0),
-        is_active: r.is_active,
-      })));
+      // Just update UI (no DB write)
+      setPackages(
+        rows.map((r, index) => ({
+          id: null, // ✅ important
+          name: r.item_label || r.provider_variation_id || `Package ${index + 1}`,
+          sku: r.provider_variation_id || null,
+          price: Number(r.price || 0),
+          original: Number(r.original_price || 0),
+          cost_price: Number(r.cost_price || 0),
+          is_active: true
+        }))
+      );
 
+      setIsPreviewMode(true);
       setActiveTab("packages");
-      alert("✅ Sync success!");
+
     } catch (e) {
       alert(`❌ Sync failed: ${e.message}`);
     }
   };
+
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -146,10 +156,15 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
 
   const handleSave = async () => {
     try {
-      await onSave(details, packages);
-      onClose();
-    } catch (e) {
+      await onSave(details, packages, {
+        fromSyncPreview: isPreviewMode
+      });
 
+      setIsPreviewMode(false);
+      onClose();
+
+    } catch (e) {
+      alert(e.message);
     }
   };
 
@@ -182,7 +197,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
         </div>
 
         {/* Content */}
-        <div className="overflow-y-auto flex-1 p-6">
+        <div ref={contentRef} className="overflow-y-auto flex-1 p-6">
 
           {/* TAB 1: DETAILS & SUPPLIER */}
           {activeTab === 'details' && (

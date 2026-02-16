@@ -1,12 +1,12 @@
 const productService = require("../services/product.service")
 
-async function createProduct(req,res,next) {
+async function createProduct(req, res, next) {
   try {
     const created = await productService.createProduct(req.body);
-    return res.status(201).json({ data: created});
+    return res.status(201).json({ data: created });
   } catch (err) {
     if (err.status) {
-      return res.status(err.status).json({ message: err.message})
+      return res.status(err.status).json({ message: err.message })
     }
     next(err)
   }
@@ -93,9 +93,9 @@ async function listAllProductsAdmin(req, res, next) {
 async function syncSupplierPriceCards(req, res, next) {
   try {
     const { id } = req.params;
-    const { markup_percent } = req.body || {};
+    const { markup_percent, preview } = req.body || {};
 
-    const result = await productService.syncSupplierPriceCards(id, { markup_percent });
+    const result = await productService.syncSupplierPriceCards(id, { markup_percent, preview });
 
     return res.status(200).json({
       message: "Supplier synced successfully",
@@ -136,4 +136,4 @@ async function updateProductPackages(req, res, next) {
   }
 }
 
-module.exports = { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProductsAdmin, syncSupplierPriceCards, listProductPackages,updateProductPackages }
+module.exports = { createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProductsAdmin, syncSupplierPriceCards, listProductPackages, updateProductPackages }

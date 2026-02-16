@@ -1,6 +1,6 @@
 import { Routes, Route, NavLink, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { createProduct, updateProduct, createPackages, updatePackages, disableProduct, deleteProduct, enableProduct, getAdminProducts, syncSupplierPriceCards, getProductPackages  } from '../../api/product.api';
+import { createProduct, updateProduct, createPackages, updatePackages, disableProduct, deleteProduct, enableProduct, getAdminProducts, syncSupplierPriceCards, getProductPackages } from '../../api/product.api';
 
 import {
   Plus, Package, Users, X, PlusCircle, ShoppingBag, LayoutDashboard, Settings, LogOut, TrendingUp, Download
@@ -174,23 +174,23 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
     setEditingProduct(null);
   };
 
-const normalizePackagesForApi = (pkgs) =>
-  pkgs.map(p => ({
-    // kalau backend expect id "price_id"
-    price_id: String(p.id || "").startsWith("new_") ? null : (p.price_id ?? p.id),
+  const normalizePackagesForApi = (pkgs) =>
+    pkgs.map(p => ({
+      // kalau backend expect id "price_id"
+      price_id: String(p.id || "").startsWith("new_") ? null : (p.price_id ?? p.id),
 
-    sku: p.sku ?? null,
-    item_label: p.item_label ?? p.name ?? "",
-    item_amount: Number.isFinite(Number(p.item_amount)) ? Number(p.item_amount) : 1,
+      sku: p.sku ?? null,
+      item_label: p.item_label ?? p.name ?? "",
+      item_amount: Number.isFinite(Number(p.item_amount)) ? Number(p.item_amount) : 1,
 
-    price: Number(p.price || 0),
-    original_price: Number(p.original_price ?? p.original ?? 0),
-    cost_price: Number(p.cost_price || 0),
+      price: Number(p.price || 0),
+      original_price: Number(p.original_price ?? p.original ?? 0),
+      cost_price: Number(p.cost_price || 0),
 
-    is_active: p.is_active !== false,
-    provider: p.provider ?? null,
-    provider_variation_id: p.provider_variation_id ?? null,
-  }));
+      is_active: p.is_active !== false,
+      provider: p.provider ?? null,
+      provider_variation_id: p.provider_variation_id ?? null,
+    }));
 
   return (
     <div className="min-h-screen bg-[#0B1D3A] pt-24 pb-12">
@@ -535,34 +535,34 @@ const normalizePackagesForApi = (pkgs) =>
                 try {
                   let productId = editingGame?.product_id;
 
-                  // const pkgPayload = normalizePackagesForApi(pkgs);
-                  const pkgPayload = pkgs;
-
                   if (productId) {
+                    // CASE: Updating existing product
                     await updateProduct(productId, details);
-                    await updatePackages(productId, pkgPayload);
                   } else {
+                    // CASE: Creating brand new product
                     const created = await createProduct(details);
-                    productId = created.data?.product_id || created.product_id; // usually created.data.product_id
+                    // Ensure we grab the ID from the correct response structure
+                    productId = created.data?.product_id || created.product_id;
                   }
 
-                  await updatePackages(productId, pkgPayload);
+                  // Now that we definitely have a productId (old or new), save the packages
+                  await updatePackages(productId, pkgs);
+
+                  // Refresh the list
                   const refreshed = await getAdminProducts();
                   setGames(refreshed);
 
                 } catch (err) {
                   console.error("SAVE FAILED:", err);
                   alert(`❌ Save failed: ${err.message || err}`);
-                  throw err; // important: so modal can also catch if you add try/catch there
+                  throw err;
                 }
               }}
 
-              onSyncSupplier={async ({ productId, markupPercent }) => {
-                await syncSupplierPriceCards(productId, markupPercent);
-                const latest = await getProductPackages(productId);
-                return latest; // return rows to modal
+              onSyncSupplier={async ({ productId, markupPercent, preview }) => {
+                const res = await syncSupplierPriceCards(productId, markupPercent, preview);
+                return res.data;   // ✅ return array only
               }}
-
               onLoadPackages={async (productId) => {
                 const latest = await getProductPackages(productId);
                 return latest;

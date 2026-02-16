@@ -281,7 +281,7 @@ async function upsertPriceCard(productId, provider, variation, opts = {}) {
     const sellingPrice = calcSellingPrice(variation.cost_price, markupPercent);
 
     const { rows } = await pool.query(
-        `
+      `
         UPDATE price_cards
         SET cost_price = $1,
             price = $2,
@@ -291,15 +291,15 @@ async function upsertPriceCard(productId, provider, variation, opts = {}) {
         WHERE price_id = $5
         RETURNING *
         `,
-        [
-          Number(variation.cost_price),
-          sellingPrice,
-          variation.stock_status === "instock",
-          variation.name,
-          existingPriceId,
-        ]
-      );
-  
+      [
+        Number(variation.cost_price),
+        sellingPrice,
+        variation.stock_status === "instock",
+        variation.name,
+        existingPriceId,
+      ]
+    );
+
     return { row: rows[0], action: "updated" };
   }
 
@@ -335,7 +335,10 @@ async function upsertPriceCard(productId, provider, variation, opts = {}) {
 
 async function syncSupplierPriceCards(productId, opts = {}) {
   const productRes = await pool.query(
-    `SELECT product_id, provider, provider_product_id FROM products WHERE product_id = $1 LIMIT 1`,
+    `SELECT product_id, provider, provider_product_id 
+     FROM products 
+     WHERE product_id = $1 
+     LIMIT 1`,
     [productId]
   );
 
@@ -353,14 +356,16 @@ async function syncSupplierPriceCards(productId, opts = {}) {
     throw err;
   }
 
-  // markup from request (default 20)
   const markupPercent = Number.isFinite(Number(opts.markup_percent))
     ? Number(opts.markup_percent)
     : 20;
 
+  const preview = Boolean(opts.preview);   // ✅ get preview flag
+
   const provider = String(product.provider).toLowerCase();
 
   let variations = [];
+
   if (provider === "moogold") {
     const raw = await productDetail(product.provider_product_id);
     variations = normalizeProductDetailToVariations(raw);
@@ -370,6 +375,30 @@ async function syncSupplierPriceCards(productId, opts = {}) {
     throw err;
   }
 
+  // ✅ BUILD preview rows (calculate markup but DO NOT write)
+  const previewRows = variations.map(v => {
+    const cost = Number(v.cost_price || 0);
+    const price = cost + (cost * (markupPercent / 100));
+
+    return {
+      product_id: product.product_id,
+      provider,
+      sku: v.sku,
+      item_label: v.item_label,
+      cost_price: cost,
+      price: price,
+      original_price: price,
+      provider_variation_id: v.provider_variation_id,
+      is_active: true
+    };
+  });
+
+  // 🚨 STOP HERE if preview
+  if (preview) {
+    return previewRows;
+  }
+
+  // ✅ REAL SAVE MODE
   const results = { inserted: 0, updated: 0, total: variations.length };
 
   for (const v of variations) {
@@ -380,6 +409,7 @@ async function syncSupplierPriceCards(productId, opts = {}) {
 
   return results;
 }
+
 
 // nak hantar pricelist untuk product 
 async function listProductPackages(productId) {
@@ -408,7 +438,11 @@ async function listProductPackages(productId) {
 // nak update
 async function updateProductPackages(productId, packages) {
   // Ensure product exists
-  const p = await pool.query(`SELECT product_id FROM products WHERE product_id = $1`, [productId]);
+  const p = await pool.query(
+    `SELECT product_id FROM products WHERE product_id = $1`,
+    [productId]
+  );
+
   if (p.rows.length === 0) {
     const err = new Error("Product not found");
     err.status = 404;
@@ -418,11 +452,16 @@ async function updateProductPackages(productId, packages) {
   const results = { inserted: 0, updated: 0, total: packages.length };
 
   for (const pkg of packages) {
-    const priceId = pkg.price_id || pkg.priceId || pkg.id || null;
+    // ✅ Only allow numeric IDs for update
+    const rawId = pkg.price_id ?? pkg.priceId ?? pkg.id ?? null;
+    const priceId =
+      rawId && !isNaN(rawId) ? Number(rawId) : null;
 
     const payload = {
       sku: pkg.sku ?? null,
-      item_amount: Number.isFinite(Number(pkg.item_amount)) ? Number(pkg.item_amount) : 1,
+      item_amount: Number.isFinite(Number(pkg.item_amount))
+        ? Number(pkg.item_amount)
+        : 1,
       item_label: pkg.item_label ?? pkg.name ?? null,
       price: Number(pkg.price ?? 0),
       original_price: Number(pkg.original_price ?? pkg.original ?? 0),
@@ -432,8 +471,8 @@ async function updateProductPackages(productId, packages) {
       is_active: pkg.is_active !== false,
     };
 
-    if (priceId && !String(priceId).startsWith("new_")) {
-      // UPDATE
+    // ================= UPDATE =================
+    if (priceId) {
       const { rowCount } = await pool.query(
         `
         UPDATE price_cards
@@ -460,16 +499,18 @@ async function updateProductPackages(productId, packages) {
         ]
       );
 
-      if (rowCount > 0) results.updated += 1;
-      continue;
+      if (rowCount > 0) {
+        results.updated += 1;
+        continue;
+      }
     }
 
-    // INSERT (new row)
+    // ================= INSERT =================
     await pool.query(
       `
       INSERT INTO price_cards
-        (product_id, sku, item_amount, item_label, price, original_price, cost_price,
-         provider, provider_variation_id, is_active)
+        (product_id, sku, item_amount, item_label, price, original_price,
+         cost_price, provider, provider_variation_id, is_active)
       VALUES
         ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
       `,
@@ -492,5 +533,6 @@ async function updateProductPackages(productId, packages) {
 
   return results;
 }
+
 
 module.exports = { listProducts, getProductBySlug, createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProducts, syncSupplierPriceCards, upsertPriceCard, listProductPackages, updateProductPackages };
