@@ -135,11 +135,11 @@ export async function getAdminProducts() {
 }
 
 // Untuk Dapatkan Pricelist dari supplier
-export async function syncSupplierPriceCards(product_id, markup_percent) {
+export async function syncSupplierPriceCards(product_id, markup_percent, preview = false) {
   const res = await fetch(`${API_BASE}/admin/products/${product_id}/sync-supplier`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ markup_percent: Number(markup_percent) }),
+    body: JSON.stringify({ markup_percent: Number(markup_percent), preview }),
   });
 
   const json = await res.json();

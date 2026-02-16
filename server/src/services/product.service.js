@@ -278,24 +278,28 @@ async function upsertPriceCard(productId, provider, variation, opts = {}) {
   if (existing.rows.length > 0) {
     const existingPriceId = existing.rows[0].price_id;
 
-    const { rows } = await pool.query(
-      `
-      UPDATE price_cards
-      SET cost_price = $1,
-          is_active = $2,
-          item_label = $3,
-          updated_at = NOW()
-      WHERE price_id = $4
-      RETURNING *
-      `,
-      [
-        Number(variation.cost_price),
-        variation.stock_status === "instock",
-        variation.name,
-        existingPriceId,
-      ]
-    );
+    const sellingPrice = calcSellingPrice(variation.cost_price, markupPercent);
 
+    const { rows } = await pool.query(
+        `
+        UPDATE price_cards
+        SET cost_price = $1,
+            price = $2,
+            is_active = $3,
+            item_label = $4,
+            updated_at = NOW()
+        WHERE price_id = $5
+        RETURNING *
+        `,
+        [
+          Number(variation.cost_price),
+          sellingPrice,
+          variation.stock_status === "instock",
+          variation.name,
+          existingPriceId,
+        ]
+      );
+  
     return { row: rows[0], action: "updated" };
   }
 
