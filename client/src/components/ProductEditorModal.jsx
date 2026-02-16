@@ -14,7 +14,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
     platform: product?.platform || 'mobile',
     type: product?.type || 'topup',
     image_url: product?.image_url || '',
-    provider: product?.provider || 'MooGold', // Supplier Settings
+    provider: product?.provider || 'mooGold', // Supplier Settings
     provider_product_id: product?.provider_product_id || '',      // Supplier Product ID
     markupPercent: 20,
   });
@@ -22,9 +22,12 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
   // Packages State
   const [packages, setPackages] = useState(currentPackages || []);
 
-   useEffect(() => {
+  useEffect(() => {
     setPackages(currentPackages || []);
   }, [currentPackages, product?.product_id]);
+  useEffect(() => {
+    console.log(product);
+  }, [product]);
 
   // ✅ Fetch latest from DB when user switches to Packages tab
   useEffect(() => {
@@ -58,22 +61,22 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
     load();
   }, [activeTab, product?.product_id, onLoadPackages]);
 
-useEffect(() => {
-  if (!product) return;
+  useEffect(() => {
+    if (!product) return;
 
-  setDetails({
-    title: product.title || "",
-    slug: product.slug || "",
-    publisher: product.publisher || "",
-    category: product.category || "MOBA",
-    platform: product.platform || "mobile",
-    type: product.type || "topup",
-    image_url: product.image_url || "",
-    provider: product.provider || "moogold",
-    provider_product_id: product.provider_product_id || "",
-    markupPercent: 20,
-  });
-}, [product]);
+    setDetails({
+      title: product.title || "",
+      slug: product.slug || "",
+      publisher: product.publisher || "",
+      category: product.category || "MOBA",
+      platform: product.platform || "mobile",
+      type: product.type || "topup",
+      image_url: product.image_url || "",
+      provider: product.provider || "moogold",
+      provider_product_id: product.provider_product_id || "",
+      markupPercent: 20,
+    });
+  }, [product]);
 
   const handlePackageChange = (index, field, value) => {
     const updated = [...packages];
@@ -100,46 +103,46 @@ useEffect(() => {
     }
   };
 
-const handleSyncPriceCards = async () => {
-  if (!product?.product_id) return alert("Please save product first (need product_id).");
-  if (!details.provider_product_id) return alert("Please enter Provider Product ID first.");
+  const handleSyncPriceCards = async () => {
+    if (!product?.product_id) return alert("Please save product first (need product_id).");
+    if (!details.provider_product_id) return alert("Please enter Provider Product ID first.");
 
-  const ok = window.confirm(`Sync from ${details.provider} with markup ${details.markupPercent}%?`);
-  if (!ok) return;
+    const ok = window.confirm(`Sync from ${details.provider} with markup ${details.markupPercent}%?`);
+    if (!ok) return;
 
-  try {
-    const rows = await onSyncSupplier({
-      productId: product.product_id,
-      markupPercent: details.markupPercent
-    });
+    try {
+      const rows = await onSyncSupplier({
+        productId: product.product_id,
+        markupPercent: details.markupPercent
+      });
 
-    // Map DB rows → UI rows
-    setPackages(rows.map(r => ({
-      id: r.price_id,
-      sku: r.sku,
-      name: r.item_label,
-      price: Number(r.price || 0),
-      original: Number(r.original_price || 0),
-      cost_price: Number(r.cost_price || 0),
-      is_active: r.is_active,
-    })));
+      // Map DB rows → UI rows
+      setPackages(rows.map(r => ({
+        id: r.price_id,
+        sku: r.sku,
+        name: r.item_label,
+        price: Number(r.price || 0),
+        original: Number(r.original_price || 0),
+        cost_price: Number(r.cost_price || 0),
+        is_active: r.is_active,
+      })));
 
-    setActiveTab("packages");
-    alert("✅ Sync success!");
-  } catch (e) {
-    alert(`❌ Sync failed: ${e.message}`);
-  }
-};
+      setActiveTab("packages");
+      alert("✅ Sync success!");
+    } catch (e) {
+      alert(`❌ Sync failed: ${e.message}`);
+    }
+  };
 
-const handleSave = async () => {
-  try {
-    await onSave(details, packages);
-    alert("✅ Saved!");
-    onClose();
-  } catch (e) {
+  const handleSave = async () => {
+    try {
+      await onSave(details, packages);
+      alert("✅ Saved!");
+      onClose();
+    } catch (e) {
 
-  }
-};
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">

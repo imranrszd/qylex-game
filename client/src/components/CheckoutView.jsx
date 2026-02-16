@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Zap,
   ShieldCheck,
@@ -76,6 +76,10 @@ const CheckoutView = ({ games }) => {
   if (!game) {
     return <div className="text-white pt-28">Game not found</div>;
   }
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const onBack = () => {
     navigate(-1); // goes back one step in history

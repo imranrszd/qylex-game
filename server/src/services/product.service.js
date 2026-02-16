@@ -4,7 +4,7 @@ const { productDetail, normalizeProductDetailToVariations } = require("./moogold
 // GET /api/products
 async function listProducts() {
   const { rows } = await pool.query(`
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active
+    SELECT product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
     FROM products
     WHERE is_active = TRUE
     ORDER BY created_at DESC
@@ -63,7 +63,7 @@ async function createProduct(data) {
   }
 
   try {
-    
+
     const { rows } = await pool.query(
       `
       INSERT INTO products
@@ -235,7 +235,7 @@ async function enableProduct(id) {
 // list semua product sebab nak functionkan enable dgn disable
 async function listAllProducts() {
   const { rows } = await pool.query(`
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active
+    SELECT product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
     FROM products
     ORDER BY created_at DESC
   `);
@@ -247,7 +247,7 @@ async function listAllProducts() {
 function extractItemAmount(name) {
 
   const m = String(name).match(/\d+/);
-  return m ? parseInt(m[0], 10) : 1; 
+  return m ? parseInt(m[0], 10) : 1;
 }
 
 function calcSellingPrice(costPrice, markupPercent) {
@@ -489,4 +489,4 @@ async function updateProductPackages(productId, packages) {
   return results;
 }
 
-module.exports = { listProducts, getProductBySlug, createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProducts, syncSupplierPriceCards,upsertPriceCard, listProductPackages, updateProductPackages };
+module.exports = { listProducts, getProductBySlug, createProduct, updateProduct, disableProduct, deleteProduct, enableProduct, listAllProducts, syncSupplierPriceCards, upsertPriceCard, listProductPackages, updateProductPackages };
