@@ -37,8 +37,19 @@ const ProductsTab = ({ games, setGames, onEdit, onDelete, onDisable, onEnable })
                 <Edit className="w-4 h-4" />
               </button>
 
-              {/* More menu */}
               <button
+                type="button"
+                onClick={() => {
+                  setOpenMenuId(null);
+                  setConfirmDelete(game);
+                }}
+                className="absolute top-2 right-2 bg-black/50 p-2 rounded-lg text-white backdrop-blur-md hover:bg-black/70 transition"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+
+              {/* More menu */}
+              {/* <button
                 type="button"
                 onClick={() =>
                   setOpenMenuId(openMenuId === game.product_id ? null : game.product_id)
@@ -47,7 +58,7 @@ const ProductsTab = ({ games, setGames, onEdit, onDelete, onDisable, onEnable })
                 aria-label={`More actions for ${game.title}`}
               >
                 <MoreVertical className="w-4 h-4" />
-              </button>
+              </button> */}
 
               {openMenuId === game.product_id && (
                 <div className="absolute top-12 right-2 w-52 bg-[#131122] border border-[#282442] rounded-xl shadow-xl overflow-hidden z-10">
@@ -112,12 +123,12 @@ const ProductsTab = ({ games, setGames, onEdit, onDelete, onDisable, onEnable })
               <p className="text-slate-400 text-sm mb-4">Publisher: {game.publisher}</p>
 
               <div className="flex gap-2 mt-auto">
-                <button
+                {/* <button
                   onClick={() => onEdit(game)}
                   className="flex-1 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 border border-slate-600"
                 >
-                  Edit Price
-                </button>
+                  Edit Product
+                </button> */}
 
                 {/* ✅ Bottom button also toggles */}
                 {game.is_active ? (
