@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { X, Edit, Trash2, Save, PlusCircle, RefreshCw, } from 'lucide-react';
-
+import { uploadImage } from '../api/product.api';
 
 const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncSupplier, onLoadPackages }) => {
   const [activeTab, setActiveTab] = useState('details');
@@ -25,9 +25,6 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
   useEffect(() => {
     setPackages(currentPackages || []);
   }, [currentPackages, product?.product_id]);
-  useEffect(() => {
-    console.log(product);
-  }, [product]);
 
   // ✅ Fetch latest from DB when user switches to Packages tab
   useEffect(() => {
@@ -134,10 +131,22 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const data = await uploadImage(file);
+      setDetails({ ...details, image_url: data.url });
+      alert("Image uploaded!");
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const handleSave = async () => {
     try {
       await onSave(details, packages);
-      alert("✅ Saved!");
       onClose();
     } catch (e) {
 
@@ -227,8 +236,20 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                     <input type="text" value={details.publisher} onChange={(e) => setDetails({ ...details, publisher: e.target.value })} className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white focus:border-cyan-500 outline-none" />
                   </div>
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Image (URL)</label>
-                    <input type="text" value={details.image_url} onChange={(e) => setDetails({ ...details, image_url: e.target.value })} className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white focus:border-cyan-500 outline-none" />
+                    <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Product Image</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        placeholder="/images/example.png"
+                        value={details.image_url}
+                        onChange={(e) => setDetails({ ...details, image_url: e.target.value })}
+                        className="flex-1 bg-black border border-[#282442] rounded-lg px-3 py-2 text-white focus:border-cyan-500 outline-none"
+                      />
+                      <label className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-2 rounded-lg text-xs font-bold cursor-pointer whitespace-nowrap flex items-center">
+                        <span>Upload</span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>

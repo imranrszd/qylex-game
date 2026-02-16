@@ -14,3 +14,5 @@ app.listen(PORT, () => {
 });
 
 app.use('/api/auth', require('./src/routes/auth'));
+
+app.use('/api/upload', require('./src/routes/upload'));

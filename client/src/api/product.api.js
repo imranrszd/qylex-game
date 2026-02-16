@@ -153,3 +153,20 @@ export async function getProductPackages(product_id) {
   if (!res.ok) throw new Error(json.message || "Failed to fetch packages");
   return json.data;
 }
+
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: "POST",
+    // Note: Do NOT set Content-Type header here. 
+    // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
+    body: formData,
+  });
+
+  const json = await res.json();
+  if (!res.ok) throw new Error(json.message || "Upload failed");
+
+  return json; // Will return { success: true, url: "/images/..." }
+}
