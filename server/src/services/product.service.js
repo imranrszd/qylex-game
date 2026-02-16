@@ -91,7 +91,7 @@ async function updateProduct(id, data) {
   const existingRes = await pool.query(
     `
     SELECT product_id, title, slug, image_url, publisher, category, type, platform,
-           provider, provider_product_id, is_active
+           provider, provider_product_id, is_active, requires_validation, validation_provider, validation_game_code
     FROM products
     WHERE product_id = $1
     LIMIT 1
@@ -106,19 +106,33 @@ async function updateProduct(id, data) {
   }
 
   const existing = existingRes.rows[0];
+  const requiresValidation =
+  data.requires_validation !== undefined
+    ? Boolean(data.requires_validation)
+    : existing.requires_validation;
 
   const updatedData = {
-    title: data.title ?? existing.title,
-    slug: data.slug ?? existing.slug,
-    image_url: data.image_url ?? existing.image_url,
-    publisher: data.publisher ?? existing.publisher,
-    category: data.category ?? existing.category,
-    type: data.type ?? existing.type,
-    platform: data.platform ?? existing.platform,
-    provider: data.provider ?? existing.provider,
-    provider_product_id: data.provider_product_id ?? existing.provider_product_id,
+  title: data.title ?? existing.title,
+  slug: data.slug ?? existing.slug,
+  image_url: data.image_url ?? existing.image_url,
+  publisher: data.publisher ?? existing.publisher,
+  category: data.category ?? existing.category,
+  type: data.type ?? existing.type,
+  platform: data.platform ?? existing.platform,
+  provider: data.provider ?? existing.provider,
+  provider_product_id: data.provider_product_id ?? existing.provider_product_id,
 
-    is_active: data.is_active ?? existing.is_active,
+  requires_validation: requiresValidation,
+
+  validation_provider: requiresValidation
+    ? (data.validation_provider ?? existing.validation_provider ?? null)
+    : null,
+
+  validation_game_code: requiresValidation
+    ? (data.validation_game_code ?? existing.validation_game_code ?? null)
+    : null,
+
+  is_active: data.is_active ?? existing.is_active,
   };
 
   if (!updatedData.title || !updatedData.slug || !updatedData.publisher) {
@@ -128,39 +142,52 @@ async function updateProduct(id, data) {
   }
 
   try {
-    const { rows } = await pool.query(
-      `
-      UPDATE products
-      SET title = $1,
-          slug = $2,
-          image_url = $3,
-          publisher = $4,
-          category = $5,
-          type = $6,
-          platform = $7,
-          provider = $8,
-          provider_product_id = $9,
-          is_active = $10,
-          updated_at = NOW()
-      WHERE product_id = $11
-      RETURNING product_id, title, slug, image_url, publisher, category, type, platform,
-                provider, provider_product_id, is_active
-      `,
-      [
-        updatedData.title,
-        updatedData.slug,
-        updatedData.image_url,
-        updatedData.publisher,
-        updatedData.category,
-        updatedData.type,
-        updatedData.platform,
-        updatedData.provider,
-        updatedData.provider_product_id,
-        updatedData.is_active,
-        id,
-      ]
-    );
+  const { rows } = await pool.query(
+    `
+    UPDATE products
+    SET title = $1,
+        slug = $2,
+        image_url = $3,
+        publisher = $4,
+        category = $5,
+        type = $6,
+        platform = $7,
+        provider = $8,
+        provider_product_id = $9,
 
+        requires_validation = $10,
+        validation_provider = $11,
+        validation_game_code = $12,
+
+        is_active = $13,
+        updated_at = NOW()
+    WHERE product_id = $14
+    RETURNING
+      product_id, title, slug, image_url, publisher, category, type, platform,
+      provider, provider_product_id,
+      requires_validation, validation_provider, validation_game_code,
+      is_active
+    `,
+    [
+      updatedData.title,
+      updatedData.slug,
+      updatedData.image_url,
+      updatedData.publisher,
+      updatedData.category,
+      updatedData.type,
+      updatedData.platform,
+      updatedData.provider,
+      updatedData.provider_product_id,
+
+      updatedData.requires_validation,
+      updatedData.validation_provider,
+      updatedData.validation_game_code,
+
+      updatedData.is_active,
+      id,
+    ]
+  );
+  
     return rows[0];
   } catch (err) {
     if (err.code === "23505") {
