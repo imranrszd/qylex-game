@@ -15,14 +15,15 @@ async function listProducts() {
 // GET /api/products/:slug
 async function getProductBySlug(slug) {
   const productRes = await pool.query(
-    `
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active
-    FROM products
-    WHERE slug = $1 AND is_active = TRUE
-    LIMIT 1
-    `,
-    [slug]
-  );
+  `
+  SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active,
+         requires_validation, validation_provider, validation_game_code
+  FROM products
+  WHERE slug = $1 AND is_active = TRUE
+  LIMIT 1
+  `,
+  [slug]
+);
 
   if (productRes.rows.length === 0) return null;
 
@@ -187,7 +188,7 @@ async function updateProduct(id, data) {
       id,
     ]
   );
-  
+
     return rows[0];
   } catch (err) {
     if (err.code === "23505") {

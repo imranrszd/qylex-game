@@ -1,9 +1,15 @@
-async function checkIdMLBB({ userid, serverid }) {
+// services/strleya.service.js
+async function checkId({ game, userid, serverid }) {
   const token = process.env.STRLEYA_TOKEN;
-  console.log("Strleya token loaded?", !!token, token?.slice(0, 6));
   if (!token) {
     const err = new Error("STRLEYA_TOKEN not set");
     err.status = 500;
+    throw err;
+  }
+
+  if (!game) {
+    const err = new Error("game is required");
+    err.status = 400;
     throw err;
   }
 
@@ -11,10 +17,10 @@ async function checkIdMLBB({ userid, serverid }) {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Token ${token}`, 
+      Authorization: `Token ${token}`,
     },
     body: JSON.stringify({
-      game: "mlbb_special",  
+      game: String(game),
       userid: String(userid),
       serverid: String(serverid),
     }),
@@ -31,4 +37,4 @@ async function checkIdMLBB({ userid, serverid }) {
   return json; // { name, region, valid }
 }
 
-module.exports = { checkIdMLBB };
+module.exports = { checkId };

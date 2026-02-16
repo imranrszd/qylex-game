@@ -1,9 +1,9 @@
 const express = require("express");
-const { validateMLBB } = require("../controllers/validate.controller");
+const { verifyAccount } = require("../controllers/validate.controller");
 
 const router = express.Router();
 
 // POST /api/validate/mlbb
-router.post("/mlbb", validateMLBB);
+router.post("/verify", verifyAccount);
 
 module.exports = router;

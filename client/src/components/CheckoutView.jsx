@@ -1,4 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
+import { verifyAccount } from "../api/validation.api";
+import { getProductBySlug } from "../api/packages.api";
+import { createOrder } from "../api/orders.api";
 import {
   Zap,
   ShieldCheck,
@@ -32,7 +35,7 @@ import {
 const SITE_CONFIG = {
   whatsapp: "60198313202", // Q Store Number
   adminPin: "1234", // Simple PIN for MVP Protection
-  qrCodeUrl: "https://upload.wikimedia.org/wikipedia/commons/d/d0/QR_code_for_mobile_English_Wikipedia.svg" // Replace with your actual DuitNow QR URL
+  qrCodeUrl: "/images/qrcode.png" // Replace with your actual DuitNow QR URL
 };
 
 // --- JOKI LOGIC ENGINE ---
@@ -72,14 +75,10 @@ const CheckoutView = ({ games }) => {
   const navigate = useNavigate();
 
   const game = games.find(g => g.slug === slug);
-
+  if (!game) return <div className="text-white pt-28">Game not found</div>;
   if (!game) {
     return <div className="text-white pt-28">Game not found</div>;
   }
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
 
   const onBack = () => {
     navigate(-1); // goes back one step in history
@@ -98,12 +97,21 @@ const CheckoutView = ({ games }) => {
 
   // Form State
   const [userId, setUserId] = useState('');
-  const [zoneId, setZoneId] = useState('');
+  const [serverId, setServerId] = useState('');
   const [contactInfo, setContactInfo] = useState(''); // New: WhatsApp/Email for direct topup
-
+  
+  // Untuk package harga product
+  const [product, setProduct] = useState(null);
+  const [priceCards, setPriceCards] = useState([]);
+  const [cardsLoading, setCardsLoading] = useState(false);
+  const [cardsError, setCardsError] = useState(null);
+  
   // ID Validation State
+  const [validateError, setValidateError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validatedName, setValidatedName] = useState(null);
+  const [validatedRegion, setValidatedRegion] = useState(null);
+  const [verificationToken, setVerificationToken] = useState(null); 
 
   const [loginMethod, setLoginMethod] = useState('Moonton');
   const [username, setUsername] = useState('');
@@ -124,27 +132,54 @@ const CheckoutView = ({ games }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState(''); // New: Generated Order ID
+  const needsValidation = !!product?.requires_validation;
+    useEffect(() => {
+  const run = async () => {
+    if (!game || game.type === "joki") return;
 
-  // Add / Remove from Cart
-  const handleAddQty = (pkgId) => {
-    setCart(prev => ({ ...prev, [pkgId]: (prev[pkgId] || 0) + 1 }));
+    setCardsLoading(true);
+    setCardsError(null);
+
+    try {
+      const p = await getProductBySlug(slug);
+      setProduct(p);
+      setPriceCards((p.price_cards || []).filter(c => c.is_active));
+      setCart({});
+    } catch (e) {
+      setCardsError(e.message);
+      setProduct(null);
+      setPriceCards([]);
+    } finally {
+      setCardsLoading(false);
+    }
   };
 
-  const handleSubQty = (pkgId) => {
+  run();
+}, [slug, game?.type]);
+
+  // Add / Remove from Cart
+  const handleAddQty = (priceId) => {
+    const id = String(priceId);
+    setCart(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }));
+  };
+
+  const handleSubQty = (priceId) => {
+    const id = String(priceId);
     setCart(prev => {
-      const newCart = { ...prev };
-      if (newCart[pkgId] > 1) {
-        newCart[pkgId] -= 1;
-      } else {
-        delete newCart[pkgId];
-      }
-      return newCart;
+      const next = { ...prev };
+      if (next[id] > 1) next[id] -= 1;
+      else delete next[id];
+      return next;
     });
   };
 
   // Validation
   let isAccountValid = false;
-  if (game.type === 'topup') isAccountValid = validatedName !== null && contactInfo.length > 5;
+  if (game.type === "topup") {
+  isAccountValid = needsValidation
+    ? (!!validatedName && userId && serverId && contactInfo.length > 5)
+    : (userId && serverId && contactInfo.length > 5);
+}
   if (isJoki) isAccountValid = username.length > 3 && password.length > 3 && phone.length > 8;
   if (isRoblox) isAccountValid = username.length > 2 && password.length > 3 && backupCode.length > 3 && phone.length > 8;
   if (isMLBBLogin) isAccountValid = username.length > 3 && password.length > 3 && phone.length > 8 && nickname.length > 2;
@@ -172,27 +207,46 @@ const CheckoutView = ({ games }) => {
 
   const totalAmount = isJoki
     ? jokiStats.price
-    : Object.entries(cart).reduce((sum, [pkgId, qty]) => {
-      const pkg = currentPackages.find(p => p.id === pkgId);
-      return sum + (pkg ? pkg.price * qty : 0);
-    }, 0);
+    : Object.entries(cart).reduce((sum, [priceId, qty]) => {
+        const card = priceCards.find(c => String(c.price_id) === String(priceId));
+        return sum + (card ? Number(card.price) * qty : 0);
+      }, 0);
 
-  // Handle Order Submit (Simulated Telegram Webhook)
-  const handleSubmitOrder = async (e) => {
-    e.preventDefault();
-    if (!receiptFile) return alert("Please upload payment receipt screenshot.");
+const handleSubmitOrder = async (e) => {
+  e.preventDefault();
+  if (!receiptFile) return alert("Please upload payment receipt screenshot.");
 
-    setIsUploading(true);
+  setIsUploading(true);
 
-    // Simulate network delay
-    await new Promise(r => setTimeout(r, 2000));
+  try {
+    const cartArray = Object.entries(cart).map(([priceId, qty]) => ({
+      price_id: Number(priceId),
+      qty: Number(qty),
+    }));
 
-    setIsUploading(false);
-    setIsPaymentModalOpen(false);
-    // Generate Random Order ID (e.g. QX-8472910)
-    setGeneratedOrderId('QX-' + Math.floor(1000000 + Math.random() * 9000000));
+    const account_payload = isJoki || isLogin
+      ? { username, phone, ...(isRoblox ? { backupCode } : {}), ...(isMLBBLogin ? { nickname } : {}), loginMethod }
+      : { userid: userId, serverid: serverId, verification_token: verificationToken || null };
+
+    const product_id = Number(product?.product_id || game.product_id || game.id);
+
+    const json = await createOrder({
+      product_id,
+      account_payload,
+      cart: cartArray,
+      contact_info: contactInfo,
+      receiptFile: receiptFile,
+    });
+
+    setGeneratedOrderId(json.order_code || String(json.order_id));
     setOrderSuccess(true);
-  };
+    setIsPaymentModalOpen(false);
+  } catch (err) {
+    alert(err.message);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   // SUCCESS SCREEN
   if (orderSuccess) {
@@ -225,7 +279,7 @@ const CheckoutView = ({ games }) => {
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Total Paid</p>
             <p className="text-2xl font-bold text-emerald-400 mb-4">RM {totalAmount.toFixed(2)}</p>
             <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Target Account</p>
-            <p className="text-sm font-mono text-white break-all">{isJoki || isLogin ? username : `${userId} (${zoneId})`}</p>
+            <p className="text-sm font-mono text-white break-all">{isJoki || isLogin ? username : `${userId} (${serverId})`}</p>
           </div>
           <button onClick={onBack} className="w-full py-3 bg-[#1d1936] hover:bg-[#282442] border border-[#282442] text-white rounded-xl font-bold transition-all">Back to Home</button>
         </div>
@@ -277,11 +331,11 @@ const CheckoutView = ({ games }) => {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="col-span-2">
                     <label className="block text-sm font-medium text-slate-400 mb-2">User ID</label>
-                    <input type="text" value={userId} onChange={(e) => { setUserId(e.target.value); setValidatedName(null); }} placeholder="e.g. 12345678" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" />
+                    <input type="text" value={userId} onChange={(e) => { setUserId(e.target.value); setValidatedName(null); setValidateError(null); }} placeholder="e.g. 12345678" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-400 mb-2">Zone ID</label>
-                    <input type="text" value={zoneId} onChange={(e) => { setZoneId(e.target.value); setValidatedName(null); }} placeholder="(1234)" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" />
+                    <input type="text" value={serverId} onChange={(e) => { setServerId(e.target.value); setValidatedName(null); setValidateError(null); }} placeholder="(1234)" className="w-full bg-black border border-[#282442] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500" />
                   </div>
                 </div>
 
@@ -291,40 +345,89 @@ const CheckoutView = ({ games }) => {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2">
-                  <p className="text-xs text-slate-500"><ShieldCheck className="w-3 h-3 inline mr-1" /> No password needed.</p>
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!userId) return;
-                      setIsValidating(true);
-                      // Simulate API delay fetching from Moonton Server
-                      await new Promise(r => setTimeout(r, 1200));
-                      setIsValidating(false);
-                      setValidatedName("QylexPlayer01"); // In a real app, this is fetched via API
-                    }}
-                    disabled={!userId || isValidating || validatedName}
-                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto ${validatedName ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50' : !userId ? 'bg-[#1d1936] text-slate-500 cursor-not-allowed border border-[#282442]' : 'bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20'}`}
-                  >
-                    {isValidating ? (
-                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span> Checking Server...</>
-                    ) : validatedName ? (
-                      <><CheckCircle2 className="w-4 h-4" /> Verified</>
-                    ) : (
-                      "Verify ID"
-                    )}
-                  </button>
-                </div>
+                  <p className="text-xs text-slate-500">
+                    <ShieldCheck className="w-3 h-3 inline mr-1" /> No password needed.
+                  </p>
 
+                  {needsValidation ? (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!userId || !serverId) return;
+
+                        setIsValidating(true);
+                        setValidateError(null);
+                        setValidatedName(null);
+                        setValidatedRegion(null);
+                        setVerificationToken(null);
+
+                        try {
+                          const json = await verifyAccount({
+                            product_id: game.product_id || game.id,
+                            account_payload: { userid: userId, serverid: serverId },
+                          });
+
+                          if (json?.data?.valid !== true) {
+                            setValidateError(json?.message || "Account not found / invalid ID.");
+                            return;
+                          }
+
+                          setValidatedName(json?.data?.name || "Verified");
+                          setValidatedRegion(json?.data?.region || null);
+                          setVerificationToken(json?.data?.verification_token || null);
+                        } catch (err) {
+                          setValidateError(err.message || "Validation failed.");
+                        } finally {
+                          setIsValidating(false);
+                        }
+                      }}
+                      disabled={!userId || !serverId || isValidating || validatedName}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto ${
+                        validatedName
+                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                          : (!userId || !serverId)
+                            ? "bg-[#1d1936] text-slate-500 cursor-not-allowed border border-[#282442]"
+                            : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                      }`}
+                    >
+                      {isValidating ? (
+                        <>
+                          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          Checking Server...
+                        </>
+                      ) : validatedName ? (
+                        <>
+                          <CheckCircle2 className="w-4 h-4" /> Verified
+                        </>
+                      ) : (
+                        "Verify ID"
+                      )}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
+                      Thanks Support Q !
+                    </span>
+                  )}
+                </div>
                 {validatedName && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between animate-in fade-in slide-in-from-top-2 mt-4">
+                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center justify-between mt-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-[#1d1936] flex items-center justify-center text-lg border border-[#282442]">🦁</div>
                       <div>
                         <p className="text-emerald-400 text-sm font-bold">{validatedName}</p>
-                        <p className="text-emerald-500/60 text-xs">Region & ID Match Confirmed</p>
+                        {validatedRegion && (
+                          <p className="text-emerald-500/60 text-xs">
+                            Region: <span className="font-mono text-emerald-300">{validatedRegion}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                     <CheckCircle2 className="text-emerald-500 w-5 h-5" />
+                  </div>
+                )}
+                {validateError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm mt-3">
+                    {validateError}
                   </div>
                 )}
               </div>
@@ -376,49 +479,115 @@ const CheckoutView = ({ games }) => {
           {/* 2. Select Package (CART SYSTEM ENABLED) */}
           <div className="bg-[#131122] rounded-2xl p-6 border border-[#282442] relative overflow-hidden">
             <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500"></div>
+
             <div className="flex items-center gap-4 mb-6 border-b border-[#282442] pb-4">
-              <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold border border-cyan-500/30">2</div>
-              <h2 className="text-xl font-bold text-white">{isJoki ? "Select Target Rank" : "Select Packages (Multi-Cart)"}</h2>
+              <div className="w-8 h-8 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold border border-cyan-500/30">
+                2
+              </div>
+              <h2 className="text-xl font-bold text-white">
+                {isJoki ? "Select Target Rank" : "Select Packages (Multi-Cart)"}
+              </h2>
             </div>
 
             {isJoki ? (
               <div className="space-y-6">
                 <JokiRankSelector label="Current Rank" value={startRank} onChange={setStartRank} />
-                <div className="flex justify-center"><ArrowRight className="text-slate-500 rotate-90 sm:rotate-0" /></div>
+                <div className="flex justify-center">
+                  <ArrowRight className="text-slate-500 rotate-90 sm:rotate-0" />
+                </div>
                 <JokiRankSelector label="Target Rank" value={targetRank} onChange={setTargetRank} />
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {currentPackages.map((pkg) => {
-                  const qty = cart[pkg.id] || 0;
-                  return (
-                    <div
-                      key={pkg.id}
-                      onClick={() => { if (qty === 0) handleAddQty(pkg.id) }}
-                      className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${qty > 0 ? 'bg-cyan-900/10 border-cyan-400' : 'bg-black border-[#282442] cursor-pointer hover:border-slate-600'}`}
-                    >
-                      {pkg.tag && <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white text-[10px] font-bold rounded-full shadow-md uppercase tracking-wide whitespace-nowrap">{pkg.tag}</div>}
-                      <div className="flex flex-col items-center text-center mt-2">
-                        <div className="w-10 h-10 mb-2 flex items-center justify-center text-2xl">{isRoblox ? '🟥' : '💎'}</div>
-                        <h3 className="text-white font-bold text-sm">{pkg.name}</h3>
-                        <p className="text-slate-400 text-xs mt-1">{pkg.bonus}</p>
+              <>
+                {/* Loading / Error */}
+                {cardsLoading && (
+                  <div className="text-slate-400 text-sm">Loading price cards...</div>
+                )}
 
-                        {qty > 0 ? (
-                          <div className="mt-3 flex items-center justify-between w-full bg-[#1d1936] rounded-lg p-1 border border-[#282442]">
-                            <button onClick={(e) => { e.stopPropagation(); handleSubQty(pkg.id); }} className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"><Minus className="w-4 h-4" /></button>
-                            <span className="text-white font-bold">{qty}</span>
-                            <button onClick={(e) => { e.stopPropagation(); handleAddQty(pkg.id); }} className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"><Plus className="w-4 h-4" /></button>
+                {cardsError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-sm">
+                    {cardsError}
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {!cardsLoading && !cardsError && priceCards.length === 0 && (
+                  <div className="text-slate-500 text-sm italic">
+                    No packages available for this product.
+                  </div>
+                )}
+
+                {/* Cards */}
+                {!cardsLoading && !cardsError && priceCards.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {priceCards.map((card) => {
+                      const id = String(card.price_id);
+                      const qty = cart[id] || 0;
+
+                      return (
+                        <div
+                          key={id}
+                          onClick={() => { if (qty === 0) handleAddQty(id); }}
+                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
+                            qty > 0
+                              ? "bg-cyan-900/10 border-cyan-400"
+                              : "bg-black border-[#282442] cursor-pointer hover:border-slate-600"
+                          }`}
+                        >
+                          {/* optional: small badge */}
+                          {!card.is_active ? (
+                            <div className="absolute top-2 right-2 text-[10px] px-2 py-1 rounded-full bg-slate-700/40 text-slate-300 border border-slate-600/40">
+                              Inactive
+                            </div>
+                          ) : null}
+
+                          <div className="flex flex-col items-center text-center mt-2">
+                            <div className="w-10 h-10 mb-2 flex items-center justify-center text-2xl">
+                              💎
+                            </div>
+
+                            {/* Title */}
+                            <h3 className="text-white font-bold text-sm">
+                              {card.item_amount} Item
+                            </h3>
+
+                            {/* Subtitle (optional) */}
+                            <p className="text-slate-400 text-xs mt-1">
+                              SKU: {card.sku}
+                            </p>
+
+                            {qty > 0 ? (
+                              <div className="mt-3 flex items-center justify-between w-full bg-[#1d1936] rounded-lg p-1 border border-[#282442]">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleSubQty(id); }}
+                                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
+                                >
+                                  <Minus className="w-4 h-4" />
+                                </button>
+
+                                <span className="text-white font-bold">{qty}</span>
+
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); handleAddQty(id); }}
+                                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
+                                >
+                                  <Plus className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="mt-3 w-full pt-3 border-t border-[#282442]">
+                                <p className="text-cyan-400 font-bold">
+                                  RM {Number(card.price).toFixed(2)}
+                                </p>
+                              </div>
+                            )}
                           </div>
-                        ) : (
-                          <div className="mt-3 w-full pt-3 border-t border-[#282442]">
-                            <p className="text-cyan-400 font-bold">RM {pkg.price.toFixed(2)}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -482,12 +651,16 @@ const CheckoutView = ({ games }) => {
                     Object.entries(cart).length === 0 ? (
                       <span className="text-slate-500 text-sm italic">Cart is empty</span>
                     ) : (
-                      Object.entries(cart).map(([pkgId, qty]) => {
-                        const pkg = currentPackages.find(p => p.id === pkgId);
-                        return pkg ? (
-                          <div key={pkgId} className="flex justify-between text-sm items-center">
-                            <span className="text-slate-300">{pkg.name} <span className="text-cyan-400 font-bold ml-1">x{qty}</span></span>
-                            <span className="text-white font-medium">RM {(pkg.price * qty).toFixed(2)}</span>
+                      Object.entries(cart).map(([priceId, qty]) => {
+                        const card = priceCards.find(c => String(c.price_id) === String(priceId));
+                        return card ? (
+                          <div key={priceId} className="flex justify-between text-sm items-center">
+                            <span className="text-slate-300">
+                              {card.item_amount} Item <span className="text-cyan-400 font-bold ml-1">x{qty}</span>
+                            </span>
+                            <span className="text-white font-medium">
+                              RM {(Number(card.price) * qty).toFixed(2)}
+                            </span>
                           </div>
                         ) : null;
                       })
