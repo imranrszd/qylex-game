@@ -328,6 +328,20 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                       <RefreshCw className="w-3 h-3" /> Sync Now
                     </button>
                   </div>
+                  <div className="grid grid-cols-3 gap-4 mt-6 mb-2">
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Requires Validation</label>
+                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Validation Provider</label>
+                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Validation Game Code</label>
+                      <input type="text" value={""} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm focus:border-orange-500 outline-none" />
+                    </div>
+                  </div>
 
                 </div>
               </div>

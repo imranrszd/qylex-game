@@ -479,10 +479,8 @@ async function updateProductPackages(productId, packages) {
   const results = { inserted: 0, updated: 0, total: packages.length };
 
   for (const pkg of packages) {
-    // ✅ Only allow numeric IDs for update
     const rawId = pkg.price_id ?? pkg.priceId ?? pkg.id ?? null;
-    const priceId =
-      rawId && !isNaN(rawId) ? Number(rawId) : null;
+    const priceId = rawId && !isNaN(rawId) ? Number(rawId) : null;
 
     const payload = {
       sku: pkg.sku ?? null,
@@ -498,21 +496,21 @@ async function updateProductPackages(productId, packages) {
       is_active: pkg.is_active !== false,
     };
 
-    // ================= UPDATE =================
+    // ================= UPDATE BY ID =================
     if (priceId) {
       const { rowCount } = await pool.query(
         `
-        UPDATE price_cards
-        SET sku = $1,
-            item_amount = $2,
-            item_label = $3,
-            price = $4,
-            original_price = $5,
-            cost_price = $6,
-            is_active = $7,
-            updated_at = NOW()
-        WHERE price_id = $8 AND product_id = $9
-        `,
+      UPDATE price_cards
+      SET sku = $1,
+          item_amount = $2,
+          item_label = $3,
+          price = $4,
+          original_price = $5,
+          cost_price = $6,
+          is_active = $7,
+          updated_at = NOW()
+      WHERE price_id = $8 AND product_id = $9
+      `,
         [
           payload.sku,
           payload.item_amount,
@@ -532,15 +530,47 @@ async function updateProductPackages(productId, packages) {
       }
     }
 
+    // ================= UPDATE BY SKU =================
+    if (payload.sku) {
+      const { rowCount } = await pool.query(
+        `
+      UPDATE price_cards
+      SET item_amount = $1,
+          item_label = $2,
+          price = $3,
+          original_price = $4,
+          cost_price = $5,
+          is_active = $6,
+          updated_at = NOW()
+      WHERE sku = $7 AND product_id = $8
+      `,
+        [
+          payload.item_amount,
+          payload.item_label,
+          payload.price,
+          payload.original_price,
+          payload.cost_price,
+          payload.is_active,
+          payload.sku,
+          productId,
+        ]
+      );
+
+      if (rowCount > 0) {
+        results.updated += 1;
+        continue;
+      }
+    }
+
     // ================= INSERT =================
     await pool.query(
       `
-      INSERT INTO price_cards
-        (product_id, sku, item_amount, item_label, price, original_price,
-         cost_price, provider, provider_variation_id, is_active)
-      VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      `,
+    INSERT INTO price_cards
+      (product_id, sku, item_amount, item_label, price, original_price,
+       cost_price, provider, provider_variation_id, is_active)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    `,
       [
         productId,
         payload.sku,
@@ -557,6 +587,7 @@ async function updateProductPackages(productId, packages) {
 
     results.inserted += 1;
   }
+
 
   return results;
 }
