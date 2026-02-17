@@ -32,10 +32,10 @@ async function getProductBySlug(slug) {
   const priceRes = await pool.query(
     `
     SELECT price_id, sku, item_amount, item_label, price, cost_price, provider, provider_category,
-           provider_variation_id, requires_server, is_active
+           provider_variation_id, requires_server, is_active, sort_order
     FROM price_cards
     WHERE product_id = $1 AND is_active = TRUE
-    ORDER BY price ASC
+    ORDER BY sort_order DESC, price ASC
     `,
     [product.product_id]
   );
@@ -453,10 +453,11 @@ async function listProductPackages(productId) {
       cost_price,
       provider,
       provider_variation_id,
-      is_active
+      is_active, 
+      sort_order
     FROM price_cards
     WHERE product_id = $1
-    ORDER BY price ASC NULLS LAST
+    ORDER BY sort_order DESC, price ASC NULLS LAST
     `,
     [productId]
   );
@@ -495,6 +496,7 @@ async function updateProductPackages(productId, packages) {
       provider: pkg.provider ?? null,
       provider_variation_id: pkg.provider_variation_id ?? null,
       is_active: pkg.is_active !== false,
+      sort_order: Number(pkg.sort_order || 0),
     };
 
     // ================= UPDATE BY ID =================
@@ -509,8 +511,9 @@ async function updateProductPackages(productId, packages) {
           original_price = $5,
           cost_price = $6,
           is_active = $7,
+          sort_order = $8,
           updated_at = NOW()
-      WHERE price_id = $8 AND product_id = $9
+      WHERE price_id = $9 AND product_id = $10
       `,
         [
           payload.sku,
@@ -520,6 +523,7 @@ async function updateProductPackages(productId, packages) {
           payload.original_price,
           payload.cost_price,
           payload.is_active,
+          payload.sort_order,
           priceId,
           productId,
         ]
