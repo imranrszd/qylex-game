@@ -99,19 +99,19 @@ const CheckoutView = ({ games }) => {
   const [userId, setUserId] = useState('');
   const [serverId, setServerId] = useState('');
   const [contactInfo, setContactInfo] = useState(''); // New: WhatsApp/Email for direct topup
-  
+
   // Untuk package harga product
   const [product, setProduct] = useState(null);
   const [priceCards, setPriceCards] = useState([]);
   const [cardsLoading, setCardsLoading] = useState(false);
   const [cardsError, setCardsError] = useState(null);
-  
+
   // ID Validation State
   const [validateError, setValidateError] = useState(null);
   const [isValidating, setIsValidating] = useState(false);
   const [validatedName, setValidatedName] = useState(null);
   const [validatedRegion, setValidatedRegion] = useState(null);
-  const [verificationToken, setVerificationToken] = useState(null); 
+  const [verificationToken, setVerificationToken] = useState(null);
 
   const [loginMethod, setLoginMethod] = useState('Moonton');
   const [username, setUsername] = useState('');
@@ -133,29 +133,29 @@ const CheckoutView = ({ games }) => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [generatedOrderId, setGeneratedOrderId] = useState(''); // New: Generated Order ID
   const needsValidation = !!product?.requires_validation;
-    useEffect(() => {
-  const run = async () => {
-    if (!game || game.type === "joki") return;
+  useEffect(() => {
+    const run = async () => {
+      if (!game || game.type === "joki") return;
 
-    setCardsLoading(true);
-    setCardsError(null);
+      setCardsLoading(true);
+      setCardsError(null);
 
-    try {
-      const p = await getProductBySlug(slug);
-      setProduct(p);
-      setPriceCards((p.price_cards || []).filter(c => c.is_active));
-      setCart({});
-    } catch (e) {
-      setCardsError(e.message);
-      setProduct(null);
-      setPriceCards([]);
-    } finally {
-      setCardsLoading(false);
-    }
-  };
+      try {
+        const p = await getProductBySlug(slug);
+        setProduct(p);
+        setPriceCards((p.price_cards || []).filter(c => c.is_active));
+        setCart({});
+      } catch (e) {
+        setCardsError(e.message);
+        setProduct(null);
+        setPriceCards([]);
+      } finally {
+        setCardsLoading(false);
+      }
+    };
 
-  run();
-}, [slug, game?.type]);
+    run();
+  }, [slug, game?.type]);
 
   // Add / Remove from Cart
   const handleAddQty = (priceId) => {
@@ -176,10 +176,10 @@ const CheckoutView = ({ games }) => {
   // Validation
   let isAccountValid = false;
   if (game.type === "topup") {
-  isAccountValid = needsValidation
-    ? (!!validatedName && userId && serverId && contactInfo.length > 5)
-    : (userId && serverId && contactInfo.length > 5);
-}
+    isAccountValid = needsValidation
+      ? (!!validatedName && userId && serverId && contactInfo.length > 5)
+      : (userId && serverId && contactInfo.length > 5);
+  }
   if (isJoki) isAccountValid = username.length > 3 && password.length > 3 && phone.length > 8;
   if (isRoblox) isAccountValid = username.length > 2 && password.length > 3 && backupCode.length > 3 && phone.length > 8;
   if (isMLBBLogin) isAccountValid = username.length > 3 && password.length > 3 && phone.length > 8 && nickname.length > 2;
@@ -208,45 +208,45 @@ const CheckoutView = ({ games }) => {
   const totalAmount = isJoki
     ? jokiStats.price
     : Object.entries(cart).reduce((sum, [priceId, qty]) => {
-        const card = priceCards.find(c => String(c.price_id) === String(priceId));
-        return sum + (card ? Number(card.price) * qty : 0);
-      }, 0);
+      const card = priceCards.find(c => String(c.price_id) === String(priceId));
+      return sum + (card ? Number(card.price) * qty : 0);
+    }, 0);
 
-const handleSubmitOrder = async (e) => {
-  e.preventDefault();
-  if (!receiptFile) return alert("Please upload payment receipt screenshot.");
+  const handleSubmitOrder = async (e) => {
+    e.preventDefault();
+    if (!receiptFile) return alert("Please upload payment receipt screenshot.");
 
-  setIsUploading(true);
+    setIsUploading(true);
 
-  try {
-    const cartArray = Object.entries(cart).map(([priceId, qty]) => ({
-      price_id: Number(priceId),
-      qty: Number(qty),
-    }));
+    try {
+      const cartArray = Object.entries(cart).map(([priceId, qty]) => ({
+        price_id: Number(priceId),
+        qty: Number(qty),
+      }));
 
-    const account_payload = isJoki || isLogin
-      ? { username, phone, ...(isRoblox ? { backupCode } : {}), ...(isMLBBLogin ? { nickname } : {}), loginMethod }
-      : { userid: userId, serverid: serverId, verification_token: verificationToken || null };
+      const account_payload = isJoki || isLogin
+        ? { username, phone, ...(isRoblox ? { backupCode } : {}), ...(isMLBBLogin ? { nickname } : {}), loginMethod }
+        : { userid: userId, serverid: serverId, verification_token: verificationToken || null };
 
-    const product_id = Number(product?.product_id || game.product_id || game.id);
+      const product_id = Number(product?.product_id || game.product_id || game.id);
 
-    const json = await createOrder({
-      product_id,
-      account_payload,
-      cart: cartArray,
-      contact_info: contactInfo,
-      receiptFile: receiptFile,
-    });
+      const json = await createOrder({
+        product_id,
+        account_payload,
+        cart: cartArray,
+        contact_info: contactInfo,
+        receiptFile: receiptFile,
+      });
 
-    setGeneratedOrderId(json.order_code || String(json.order_id));
-    setOrderSuccess(true);
-    setIsPaymentModalOpen(false);
-  } catch (err) {
-    alert(err.message);
-  } finally {
-    setIsUploading(false);
-  }
-};
+      setGeneratedOrderId(json.order_code || String(json.order_id));
+      setOrderSuccess(true);
+      setIsPaymentModalOpen(false);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   // SUCCESS SCREEN
   if (orderSuccess) {
@@ -382,13 +382,12 @@ const handleSubmitOrder = async (e) => {
                         }
                       }}
                       disabled={!userId || !serverId || isValidating || validatedName}
-                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto ${
-                        validatedName
-                          ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
-                          : (!userId || !serverId)
-                            ? "bg-[#1d1936] text-slate-500 cursor-not-allowed border border-[#282442]"
-                            : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
-                      }`}
+                      className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 w-full sm:w-auto ${validatedName
+                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/50"
+                        : (!userId || !serverId)
+                          ? "bg-[#1d1936] text-slate-500 cursor-not-allowed border border-[#282442]"
+                          : "bg-cyan-600 hover:bg-cyan-500 text-white shadow-lg shadow-cyan-500/20"
+                        }`}
                     >
                       {isValidating ? (
                         <>
@@ -528,11 +527,10 @@ const handleSubmitOrder = async (e) => {
                         <div
                           key={id}
                           onClick={() => { if (qty === 0) handleAddQty(id); }}
-                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${
-                            qty > 0
-                              ? "bg-cyan-900/10 border-cyan-400"
-                              : "bg-black border-[#282442] cursor-pointer hover:border-slate-600"
-                          }`}
+                          className={`relative p-4 rounded-xl border-2 transition-all duration-200 ${qty > 0
+                            ? "bg-cyan-900/10 border-cyan-400"
+                            : "bg-black border-[#282442] cursor-pointer hover:border-slate-600"
+                            }`}
                         >
                           {/* optional: small badge */}
                           {!card.is_active ? (
@@ -548,13 +546,13 @@ const handleSubmitOrder = async (e) => {
 
                             {/* Title */}
                             <h3 className="text-white font-bold text-sm">
-                              {card.item_amount} Item
+                              {card.item_label}
                             </h3>
 
                             {/* Subtitle (optional) */}
-                            <p className="text-slate-400 text-xs mt-1">
+                            {/* <p className="text-slate-400 text-xs mt-1">
                               SKU: {card.sku}
-                            </p>
+                            </p> */}
 
                             {qty > 0 ? (
                               <div className="mt-3 flex items-center justify-between w-full bg-[#1d1936] rounded-lg p-1 border border-[#282442]">

@@ -18,6 +18,11 @@ export const ADMIN_ORDERS = [
   { id: "QX-8810", user: "GamingKing", item: "Epic -> Legend", price: "RM 45.00", status: "In Progress", date: "1 hour ago", method: "Grab" },
   { id: "QX-8809", user: "Wong Wei", item: "500 Robux", price: "RM 19.90", status: "Success", date: "2 hours ago", method: "TNG" },
   { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
+  { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
+  { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
+  { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
+  { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
+  { id: "QX-8808", user: "Siti Nur", item: "Twilight Pass", price: "RM 38.00", status: "Success", date: "3 hours ago", method: "Card" },
 ];
 
 export const ADMIN_CUSTOMERS = [

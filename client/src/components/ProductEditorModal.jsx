@@ -51,12 +51,13 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
           rows.map((r) => ({
             id: r.price_id,
             sku: r.sku,
-            name: r.item_label,
+            name: cleanPackageName(r.item_label),
             original: Number(r.original_price || 0),
             price: Number(r.price || 0),
             cost_price: Number(r.cost_price || 0),
             item_amount: r.item_amount,
             is_active: r.is_active,
+            sort_order: r.sort_order || 0,
             provider: r.provider,
             provider_variation_id: r.provider_variation_id,
           }))
@@ -89,6 +90,18 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       validation_game_code: product.validation_game_code || "",
     });
   }, [product]);
+
+  const cleanPackageName = (rawName) => {
+    if (!rawName) return "";
+    // 1. Remove SKU/ID like (#123456)
+    let clean = rawName.replace(/\s\(#\d+\)/g, "").trim();
+    // 2. Remove Game Title before the dash
+    if (clean.includes(" - ")) {
+      const parts = clean.split(" - ");
+      clean = parts.slice(1).join(" - ");
+    }
+    return clean;
+  };
 
   const handlePackageChange = (index, field, value) => {
     const updated = [...packages];
@@ -129,12 +142,13 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       setPackages(
         rows.map((r, index) => ({
           id: null, // ✅ important
-          name: r.item_label || r.provider_variation_id || `Package ${index + 1}`,
+          name: cleanPackageName(r.item_label) || r.provider_variation_id || `Package ${index + 1}`,
           sku: r.provider_variation_id || null,
           price: Number(r.price || 0),
           original: Number(r.original_price || 0),
           cost_price: Number(r.cost_price || 0),
-          is_active: true
+          is_active: true,
+          sort_order: 0
         }))
       );
 
@@ -418,6 +432,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                       <th className="p-3">Profit (RM)</th>
                       <th className="p-3">Margin %</th>
                       <th className="p-3 text-center">Action</th>
+                      <th className="p-3">Order</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#282442] bg-black">
@@ -449,6 +464,14 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                         </td>
                         <td className="p-2 text-center">
                           <button onClick={() => handleDeletePackage(idx)} className="text-red-400 hover:text-red-300 p-1"><Trash2 className="w-4 h-4" /></button>
+                        </td>
+                        <td className="p-2">
+                          <input
+                            type="number"
+                            value={pkg.sort_order || 0}
+                            onChange={(e) => handlePackageChange(idx, 'sort_order', parseInt(e.target.value))}
+                            className="bg-transparent border-b border-transparent focus:border-cyan-500 outline-none text-white w-12"
+                          />
                         </td>
                       </tr>
                     ))}
