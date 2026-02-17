@@ -73,7 +73,9 @@ const JokiRankSelector = ({ label, value, onChange }) => {
 const CheckoutView = ({ games }) => {
   const { slug } = useParams();
   const navigate = useNavigate();
-
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [slug]);
   const game = games.find(g => g.slug === slug);
   if (!game) return <div className="text-white pt-28">Game not found</div>;
   if (!game) {
@@ -122,6 +124,7 @@ const CheckoutView = ({ games }) => {
 
   const [startRank, setStartRank] = useState({ rank: 'Epic', tier: 'II', star: 2 });
   const [targetRank, setTargetRank] = useState({ rank: 'Legend', tier: 'IV', star: 3 });
+  const maxSales = Math.max(...priceCards.map(c => Number(c.sales_count || 0)));
 
   // NEW CART STATE: Allows multiple items (e.g. Weekly Pass x2, 14 Diamond x1)
   const [cart, setCart] = useState({});
@@ -522,6 +525,7 @@ const CheckoutView = ({ games }) => {
                     {priceCards.map((card) => {
                       const id = String(card.price_id);
                       const qty = cart[id] || 0;
+                      const isBestseller = Number(card.sales_count) === maxSales && maxSales > 0;
 
                       return (
                         <div
@@ -538,47 +542,56 @@ const CheckoutView = ({ games }) => {
                               Inactive
                             </div>
                           ) : null}
+                          <div key={card.price_id} className="relative ...">
+                            {/* BESTSELLER BADGE */}
+                            {isBestseller && (
+                              <div className="absolute -top-2 -right-2 z-10">
+                                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-black text-[10px] font-black px-2 py-1 rounded-lg shadow-lg uppercase tracking-tighter flex items-center gap-1">
+                                  🔥 Bestseller
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex flex-col items-center text-center mt-2">
+                              <div className="w-10 h-10 mb-2 flex items-center justify-center text-2xl">
+                                💎
+                              </div>
 
-                          <div className="flex flex-col items-center text-center mt-2">
-                            <div className="w-10 h-10 mb-2 flex items-center justify-center text-2xl">
-                              💎
-                            </div>
+                              {/* Title */}
+                              <h3 className="text-white font-bold text-sm">
+                                {card.item_label}
+                              </h3>
 
-                            {/* Title */}
-                            <h3 className="text-white font-bold text-sm">
-                              {card.item_label}
-                            </h3>
-
-                            {/* Subtitle (optional) */}
-                            {/* <p className="text-slate-400 text-xs mt-1">
+                              {/* Subtitle (optional) */}
+                              {/* <p className="text-slate-400 text-xs mt-1">
                               SKU: {card.sku}
                             </p> */}
 
-                            {qty > 0 ? (
-                              <div className="mt-3 flex items-center justify-between w-full bg-[#1d1936] rounded-lg p-1 border border-[#282442]">
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleSubQty(id); }}
-                                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
-                                >
-                                  <Minus className="w-4 h-4" />
-                                </button>
+                              {qty > 0 ? (
+                                <div className="mt-3 flex items-center justify-between w-full bg-[#1d1936] rounded-lg p-1 border border-[#282442]">
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleSubQty(id); }}
+                                    className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
 
-                                <span className="text-white font-bold">{qty}</span>
+                                  <span className="text-white font-bold">{qty}</span>
 
-                                <button
-                                  onClick={(e) => { e.stopPropagation(); handleAddQty(id); }}
-                                  className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
-                                >
-                                  <Plus className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="mt-3 w-full pt-3 border-t border-[#282442]">
-                                <p className="text-cyan-400 font-bold">
-                                  RM {Number(card.price).toFixed(2)}
-                                </p>
-                              </div>
-                            )}
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); handleAddQty(id); }}
+                                    className="w-8 h-8 flex items-center justify-center text-white hover:bg-black rounded"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="mt-3 w-full pt-3 border-t border-[#282442]">
+                                  <p className="text-cyan-400 font-bold">
+                                    RM {Number(card.price).toFixed(2)}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

@@ -17,7 +17,7 @@ async function getProductBySlug(slug) {
   const productRes = await pool.query(
     `
   SELECT product_id, title, slug, image_url, publisher, category, type, platform, is_active,
-         requires_validation, validation_provider, validation_game_code
+          requires_validation, validation_provider, validation_game_code
   FROM products
   WHERE slug = $1 AND is_active = TRUE
   LIMIT 1
@@ -29,12 +29,26 @@ async function getProductBySlug(slug) {
 
   const product = productRes.rows[0];
 
+  // UPDATED QUERY BELOW 👇
   const priceRes = await pool.query(
     `
-    SELECT price_id, sku, item_amount, item_label, price, cost_price, provider, provider_category,
-           provider_variation_id, requires_server, is_active, sort_order
-    FROM price_cards
-    WHERE product_id = $1 AND is_active = TRUE
+    SELECT 
+        pc.price_id, 
+        pc.sku, 
+        pc.item_amount, 
+        pc.item_label, 
+        pc.price, 
+        pc.cost_price, 
+        pc.provider, 
+        pc.provider_category,
+        pc.provider_variation_id, 
+        pc.requires_server, 
+        pc.is_active, 
+        pc.sort_order,
+        -- This is the "magic" line that connects the orders to your packages
+        (SELECT COUNT(*) FROM orders o WHERE o.price_id = pc.price_id AND o.status IN ('PAID', 'COMPLETED')) as sales_count
+    FROM price_cards pc
+    WHERE pc.product_id = $1 AND pc.is_active = TRUE
     ORDER BY sort_order DESC, price ASC
     `,
     [product.product_id]
