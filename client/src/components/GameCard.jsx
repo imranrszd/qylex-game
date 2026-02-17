@@ -7,12 +7,19 @@ export default function GameCard({ game, onClick }) {
   return (
     <div onClick={() => navigate(`/checkout/${game.slug}`)} className="group relative bg-[#1F2937] rounded-2xl overflow-hidden cursor-pointer border border-slate-700/50 hover:border-cyan-500/50 transition-all duration-300 hover:shadow-[0_0_30px_rgba(34,211,238,0.15)]">
       <div className="h-48 relative overflow-hidden bg-white">
-        <img
-          src={game.image_url}
-          alt={game.title}
-          className="w-full h-full object-cover"
-          loading="lazy"
-        />
+        {game.image_url ? (
+          <img
+            src={game.image_url}
+            alt={game.title}
+            className="w-full h-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full white flex items-center justify-center">
+            {/* Optional: Add a placeholder icon or game title here */}
+            <span className="text-slate-500">No Image</span>
+          </div>
+        )}
         <div className="absolute inset-0 bg-linear-to-t from-[#1F2937] to-transparent opacity-90"></div>
         {/* <div className="absolute bottom-4 left-4"><div className="text-4xl mb-2">{game.icon}</div></div> */}
       </div>

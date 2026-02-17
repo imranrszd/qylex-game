@@ -60,7 +60,7 @@ function normalizeProductDetailToVariations(moogoldProductDetailJson) {
   const variations = moogoldProductDetailJson?.Variation || moogoldProductDetailJson?.variation || [];
 
   return variations.map((v) => ({
-    name: v.variation_name,
+    item_label: v.variation_name,
     provider_variation_id: String(v.variation_id),
     cost_price: Number(v.variation_price),
     stock_status: v.stock_status, // "instock" / "outofstock"

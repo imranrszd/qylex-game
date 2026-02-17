@@ -7,6 +7,8 @@ import {
   Gamepad2,
   ArrowRight,
   Package,
+  SquareUser,
+  Settings2,
 } from 'lucide-react';
 // --- New Component: TrackOrderView ---
 export default function TrackOrderView({ onBack }) {
@@ -20,7 +22,7 @@ export default function TrackOrderView({ onBack }) {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      setOrderData({ id: orderId.toUpperCase(), status: 'success', game: "Mobile Legends", item: "Weekly Diamond Pass", price: 8.60, userId: "12345678 (1234)", date: "10 Feb 2026, 08:45 PM", payment: "Touch 'n Go" });
+      setOrderData({ id: orderId.toUpperCase(), status: 'success', service: 'Top-up', account: '12345678 (2012)', game: "Mobile Legends", item: "Weekly Diamond Pass", price: 8.60, userId: "12345678 (1234)", date: "10 Feb 2026, 08:45 PM", payment: "Touch 'n Go" });
     }, 1500);
   };
 
@@ -50,10 +52,24 @@ export default function TrackOrderView({ onBack }) {
           <div className="bg-[#1F2937] rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
             <div className="bg-emerald-500/10 border-b border-emerald-500/20 p-6 flex items-center gap-4"><div className="w-12 h-12 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg shadow-emerald-500/30"><CheckCircle2 className="w-6 h-6 text-white" /></div><div><p className="text-emerald-400 font-bold uppercase tracking-wider text-sm">Order Completed</p><p className="text-white font-bold text-xl">Thank you for your purchase!</p></div></div>
             <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2"><Package className="w-4 h-4" /> Order ID</span><span className="text-white font-mono font-bold">{orderData.id}</span></div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2"><Gamepad2 className="w-4 h-4" /> Game</span><span className="text-white font-medium">{orderData.game}</span></div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2"><Zap className="w-4 h-4" /> Item</span><span className="text-cyan-400 font-bold">{orderData.item}</span></div>
-              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2"><CreditCard className="w-4 h-4" /> Price</span><span className="text-white font-bold">RM {orderData.price.toFixed(2)}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <Package className="w-4 h-4" /> Order ID
+              </span><span className="text-white font-mono font-bold">{orderData.id}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <Settings2 className="w-4 h-4" /> Service
+              </span><span className="text-white font-medium">{orderData.service}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <SquareUser className="w-4 h-4" /> Account
+              </span><span className="text-white font-medium">{orderData.account}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <Gamepad2 className="w-4 h-4" /> Game
+              </span><span className="text-white font-medium">{orderData.game}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <Zap className="w-4 h-4" /> Item
+              </span><span className="text-cyan-400 font-bold">{orderData.item}</span></div>
+              <div className="flex justify-between items-center py-2 border-b border-slate-700/50"><span className="text-slate-400 text-sm flex items-center gap-2">
+                <CreditCard className="w-4 h-4" /> Price
+              </span><span className="text-white font-bold">RM {orderData.price.toFixed(2)}</span></div>
             </div>
           </div>
         </div>
