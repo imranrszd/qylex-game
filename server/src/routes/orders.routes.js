@@ -20,5 +20,10 @@ const upload = multer({
 });
 
 router.post("/", upload.single("receipt"), ordersController.createOrder);
+router.post('/create', ordersController.createSupplierOrder);
+router.post(
+  "/supplier/create",
+  ordersController.createSupplierOrder
+);
 
 module.exports = router;

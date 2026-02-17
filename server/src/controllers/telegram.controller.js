@@ -1,7 +1,6 @@
 const { setOrderPaymentStatus } = require("../services/adminPayments.service");
 
 const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
 
 async function tgApi(method, payload) {
   const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${method}`, {
@@ -17,20 +16,22 @@ async function tgApi(method, payload) {
 function parseCallbackData(s) {
   const [prefix, action, orderIdStr] = String(s || "").split(":");
   const orderId = Number(orderIdStr);
+
   if (prefix !== "pay") return null;
-  if (!["approve", "reject"].includes(action)) return null;
   if (!orderId) return null;
+
+  // ✅ allow approve_auto
+  const allowed = ["approve", "approve_auto", "reject"];
+  if (!allowed.includes(action)) return null;
+
   return { action, orderId };
 }
 
 exports.telegramWebhook = async (req, res) => {
-  // Telegram needs fast 200
   res.sendStatus(200);
 
   try {
     const update = req.body;
-
-    // Only care about button presses
     if (!update?.callback_query) return;
 
     const cq = update.callback_query;
@@ -38,8 +39,7 @@ exports.telegramWebhook = async (req, res) => {
     const chatId = msg?.chat?.id;
     const messageId = msg?.message_id;
 
-    // ✅ Allow everyone in YOUR group only
-    if (String(chatId) !== String(TELEGRAM_CHAT_ID)) {
+    if (String(chatId) !== String(process.env.TELEGRAM_CHAT_ID)) {
       await tgApi("answerCallbackQuery", {
         callback_query_id: cq.id,
         text: "Not allowed (wrong group).",
@@ -60,25 +60,30 @@ exports.telegramWebhook = async (req, res) => {
 
     const { action, orderId } = parsed;
 
-    // 1) Update DB
-    const result = await setOrderPaymentStatus({
-      orderId,
-      action,
-      verifiedBy: null, // optional mapping later
-    });
+    // ✅ This service will do DB update AND supplier call if approve_auto
+    const result = await setOrderPaymentStatus({ orderId, action, verifiedBy: null });
+    
+    if (action === "approve_auto" && result?.status !== "PROCESSING") {
+      await tgApi("answerCallbackQuery", {
+        callback_query_id: cq.id,
+        text: "❌ AUTO failed/partial. Retry / approve manual.",
+        show_alert: true,
+      });
+      console.log("❌ AUTO approve failed:", { orderId, result });
+      return;
+    }
 
-    // 2) Acknowledge click (otherwise button shows loading forever)
+    const approved = action === "approve" || action === "approve_auto";
+
     await tgApi("answerCallbackQuery", {
       callback_query_id: cq.id,
-      text: action === "approve" ? "✅ Approved" : "❌ Rejected",
+      text: approved ? "✅ Approved" : "❌ Rejected",
       show_alert: false,
     });
 
-    // 3) Remove buttons + append VERIFIED line
-    const statusLine =
-      action === "approve"
-        ? `<b>✅ VERIFIED: PAID</b>`
-        : `<b>❌ VERIFIED: REJECTED</b>`;
+    const statusLine = approved
+      ? `<b>✅ VERIFIED: PAID</b>${action === "approve_auto" ? " (AUTO)" : " (MANUAL)"}`
+      : `<b>❌ VERIFIED: REJECTED</b>`;
 
     const newMarkup = { inline_keyboard: [] };
 
@@ -100,7 +105,7 @@ exports.telegramWebhook = async (req, res) => {
       });
     }
 
-    console.log("✅ Telegram action done:", { orderId, action, db: result });
+    console.log("✅ Telegram action done:", { orderId, action, result });
   } catch (e) {
     console.error("❌ Telegram webhook handler failed:", e.message);
   }

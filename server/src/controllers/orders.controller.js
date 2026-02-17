@@ -17,3 +17,22 @@ exports.createOrder = async (req, res) => {
     });
   }
 };
+
+exports.createSupplierOrder = async (req, res) => {
+  try {
+    const result = await ordersService.createSupplierOrder(req.body);
+
+    return res.status(200).json({
+      ok: true,
+      supplier: "moogold",
+      data: result,
+    });
+
+  } catch (err) {
+    const status = err.status || 500;
+    return res.status(status).json({
+      ok: false,
+      message: err.message,
+    });
+  }
+};

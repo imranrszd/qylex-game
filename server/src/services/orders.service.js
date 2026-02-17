@@ -1,5 +1,12 @@
+const axios = require("axios");
+const crypto = require("crypto");
+
 const pool = require("../db/pool");
 const { sendOrderToTelegram  } = require("./telegram.service");
+
+const MOO_BASE_URL = "https://moogold.com/wp-json/v1/api";
+const PARTNER_ID = process.env.MOOGOLD_PARTNER_ID;
+const SECRET_KEY = process.env.MOOGOLD_SECRET_KEY;
 
 function httpError(status, message) {
   const e = new Error(message);
@@ -213,7 +220,8 @@ exports.createOrder = async ({ body, file }) => {
 
     const inlineKeyboard = [
     [
-        { text: "✅ Approve", callback_data: `pay:approve:${orderId}` },
+        { text: "✅ Approve (Manual)", callback_data: `pay:approve:${orderId}` },
+        { text: "✅ Approve (Auto)", callback_data: `pay:approve_auto:${orderId}` },
         { text: "❌ Reject",  callback_data: `pay:reject:${orderId}` },
     ]
     ];
@@ -271,5 +279,65 @@ exports.createOrder = async ({ body, file }) => {
     throw err;
   } finally {
     client.release();
+  }
+};
+
+exports.createSupplierOrder = async (payload) => {
+  if (!payload?.category) throw httpError(400, "category is required");
+  if (!payload?.product_id) throw httpError(400, "product_id is required");
+  if (!payload?.quantity) throw httpError(400, "quantity is required");
+
+  const path = "order/create_order";
+  const timestamp = Math.floor(Date.now() / 1000);
+
+  const body = {
+    path,
+    data: {
+      category: Number(payload.category),
+      "product-id": Number(payload.product_id),
+      quantity: Number(payload.quantity),
+      "User ID": String(payload.user_id || ""),
+      Server: String(payload.server || ""),
+    },
+  };
+
+  if (!PARTNER_ID || !SECRET_KEY) {
+    throw httpError(500, "Supplier credentials not configured");
+  }
+
+  const basicAuth = Buffer.from(`${PARTNER_ID}:${SECRET_KEY}`).toString("base64");
+
+  // IMPORTANT: MooGold requires EXACT string format
+  const stringToSign = JSON.stringify(body) + timestamp + path;
+
+  const authSignature = crypto
+    .createHmac("sha256", SECRET_KEY)
+    .update(stringToSign)
+    .digest("hex");
+
+  try {
+    const response = await axios.post(
+      `${MOO_BASE_URL}/${path}`,
+      body,
+      {
+        headers: {
+          Authorization: `Basic ${basicAuth}`,
+          auth: authSignature,
+          timestamp: timestamp,
+          "Content-Type": "application/json",
+        },
+        timeout: 15000,
+      }
+    );
+
+    return response.data;
+
+  } catch (error) {
+    console.error("MooGold error:", error.response?.data || error.message);
+
+    throw httpError(
+      error.response?.status || 500,
+      error.response?.data?.message || "MooGold API Error"
+    );
   }
 };

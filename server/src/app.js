@@ -10,6 +10,9 @@ const adminSuppliersRoutes = require("./routes/admin.suppliers.routes");
 const validateRoutes = require("./routes/validate.routes");
 const adminPaymentsRoutes = require("./routes/admin.payments.routes");
 const telegramRoutes = require("./routes/telegram.routes");
+const moogoldRoutes = require("./routes/moogold.routes");
+
+
 
 const app = express();
 
@@ -33,6 +36,7 @@ app.use("/api/admin", adminPaymentsRoutes);
 app.use("/api/admin", adminRoutes); 
 app.use("/api/admin", adminProductsRoutes);
 app.use("/api/admin/suppliers",adminSuppliersRoutes);
+app.use("/api/moogold", moogoldRoutes);
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;

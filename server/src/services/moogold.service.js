@@ -8,12 +8,12 @@ function makeBasicAuth(partnerId, secretKey) {
 }
 
 function signRequest({ payloadString, timestamp, path, secretKey }) {
-  // Per doc: hash_hmac('SHA256', Payload + Timestamp + Path, SECRET)
+  // Doc: hash_hmac('SHA256', Payload + Timestamp + Path, SECRET)
   const toSign = `${payloadString}${timestamp}${path}`;
   return crypto.createHmac("sha256", secretKey).update(toSign).digest("hex");
 }
 
-async function productDetail(moogoldProductId) {
+function getCreds() {
   const partnerId = process.env.MOOGOLD_PARTNER_ID;
   const secretKey = process.env.MOOGOLD_SECRET_KEY;
 
@@ -23,11 +23,31 @@ async function productDetail(moogoldProductId) {
     throw err;
   }
 
-  const path = "product/product_detail";
+  return { partnerId, secretKey };
+}
 
-  // Important: keep key order consistent (path first, then product_id)
-  const body = { path, product_id: Number(moogoldProductId) };
-  const payloadString = JSON.stringify(body); // no spaces by default
+// Keep JSON deterministic to reduce signature mismatch risk
+function stableStringify(obj) {
+  const sorter = (x) => {
+    if (Array.isArray(x)) return x.map(sorter);
+    if (x && typeof x === "object") {
+      return Object.keys(x)
+        .sort()
+        .reduce((acc, k) => {
+          acc[k] = sorter(x[k]);
+          return acc;
+        }, {});
+    }
+    return x;
+  };
+  return JSON.stringify(sorter(obj));
+}
+
+async function moogoldPost(path, data) {
+  const { partnerId, secretKey } = getCreds();
+
+  const body = { path, data };
+  const payloadString = stableStringify(body);
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
   const auth = signRequest({ payloadString, timestamp, path, secretKey });
@@ -52,19 +72,49 @@ async function productDetail(moogoldProductId) {
     throw err;
   }
 
-  return json; // return full response first (senang debug)
+  return json;
 }
 
+// ---- API wrappers ----
+
+// Product detail (used to fetch variations)
+async function productDetail(moogoldProductId) {
+  const path = "product/product_detail";
+  return moogoldPost(path, { product_id: Number(moogoldProductId) });
+}
+
+// Create order (used for Approve Auto)
+async function createOrder({ variationId, quantity, fields = {} }) {
+  const path = "order/create_order";
+
+  // category: 1 = Direct Top Up (as per docs)
+  const data = {
+    category: 1,
+    "product-id": Number(variationId),
+    quantity: Number(quantity),
+    ...fields, // dynamic fields: "User ID", "Server", etc.
+  };
+
+  return moogoldPost(path, data);
+}
+
+// Normalize variations list
 function normalizeProductDetailToVariations(moogoldProductDetailJson) {
-  // MooGold returns different key casing sometimes; handle both
-  const variations = moogoldProductDetailJson?.Variation || moogoldProductDetailJson?.variation || [];
+  const variations =
+    moogoldProductDetailJson?.Variation ||
+    moogoldProductDetailJson?.variation ||
+    [];
 
   return variations.map((v) => ({
     name: v.variation_name,
     provider_variation_id: String(v.variation_id),
     cost_price: Number(v.variation_price),
-    stock_status: v.stock_status, // "instock" / "outofstock"
+    stock_status: v.stock_status,
   }));
 }
 
-module.exports = { productDetail, normalizeProductDetailToVariations };
+module.exports = {
+  productDetail,
+  createOrder,
+  normalizeProductDetailToVariations,
+};
