@@ -88,8 +88,6 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       validation_provider: product.validation_provider || "",
       validation_game_code: product.validation_game_code || "",
     });
-
-    console.log("validation:", product.requires_validation);
   }, [product]);
 
   const cleanPackageName = (rawName) => {
