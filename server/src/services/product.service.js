@@ -4,7 +4,9 @@ const { productDetail, normalizeProductDetailToVariations } = require("./moogold
 // GET /api/products
 async function listProducts() {
   const { rows } = await pool.query(`
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
+    SELECT product_id, title, slug, image_url, publisher, category, type, platform,
+       provider, provider_product_id, is_active,
+       requires_validation, validation_provider, validation_game_code
     FROM products
     WHERE is_active = TRUE
     ORDER BY created_at DESC
@@ -69,6 +71,9 @@ async function createProduct(data) {
     provider = null,
     provider_product_id = null,
     is_active = true,
+    requires_validation = false,
+    validation_provider = null,
+    validation_game_code = null,
   } = data;
 
   if (!title || !slug || !publisher) {
@@ -80,16 +85,36 @@ async function createProduct(data) {
   try {
 
     const { rows } = await pool.query(
-      `
-      INSERT INTO products
-        (title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active)
-      VALUES
-        ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      RETURNING
-        product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
-      `,
-      [title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active]
-    );
+    `
+    INSERT INTO products
+      (title, slug, image_url, publisher, category, type, platform,
+       provider, provider_product_id,
+       requires_validation, validation_provider, validation_game_code,
+       is_active)
+    VALUES
+      ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+    RETURNING
+      product_id, title, slug, image_url, publisher, category, type, platform,
+      provider, provider_product_id,
+      requires_validation, validation_provider, validation_game_code,
+      is_active
+    `,
+    [
+      title,
+      slug,
+      image_url,
+      publisher,
+      category,
+      type,
+      platform,
+      provider,
+      provider_product_id,
+      reqVal,
+      reqVal ? validation_provider : null,
+      reqVal ? validation_game_code : null,
+      is_active,
+    ]
+  );
 
     return rows[0];
   } catch (err) {

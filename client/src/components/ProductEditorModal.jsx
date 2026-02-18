@@ -48,18 +48,17 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       try {
         const rows = await onLoadPackages(product.product_id);
         setPackages(
-          rows.map((r) => ({
-            id: r.price_id,
-            sku: r.sku,
-            name: cleanPackageName(r.item_label),
-            original: Number(r.original_price || 0),
-            price: Number(r.price || 0),
-            cost_price: Number(r.cost_price || 0),
-            item_amount: r.item_amount,
-            is_active: r.is_active,
-            sort_order: r.sort_order || 0,
-            provider: r.provider,
+          rows.map((r, index) => ({
+            id: null,
+            name: cleanPackageName(r.item_label) || r.provider_variation_id || `Package ${index + 1}`,
+            provider: details.provider,
             provider_variation_id: r.provider_variation_id,
+            sku: `${details.provider}_${r.provider_variation_id}`,
+            price: Number(r.price || 0),
+            original: Number(r.original_price || 0),
+            cost_price: Number(r.cost_price || 0),
+            is_active: true,
+            sort_order: 0,
           }))
         );
       } catch (e) {
@@ -154,7 +153,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
         rows.map((r, index) => ({
           id: null, // ✅ important
           name: cleanPackageName(r.item_label) || r.provider_variation_id || `Package ${index + 1}`,
-          sku: r.provider_variation_id || null,
+          sku: `${details.provider}_${r.provider_variation_id}`,
           price: Number(r.price || 0),
           original: Number(r.original_price || 0),
           cost_price: Number(r.cost_price || 0),
@@ -380,7 +379,15 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                         <input
                           type="checkbox"
                           checked={details.requires_validation}
-                          onChange={(e) => setDetails({ ...details, requires_validation: e.target.checked })}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setDetails({
+                              ...details,
+                              requires_validation: checked,
+                              validation_provider: checked ? details.validation_provider : "",
+                              validation_game_code: checked ? details.validation_game_code : "",
+                            });
+                          }}
                           className="w-4 h-4 accent-orange-500 cursor-pointer"
                         />
                         <span className={`ml-3 text-sm font-medium transition-colors ${details.requires_validation ? 'text-white' : 'text-slate-400'}`}>

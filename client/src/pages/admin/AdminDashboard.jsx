@@ -174,23 +174,36 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
     setEditingProduct(null);
   };
 
-  const normalizePackagesForApi = (pkgs) =>
-    pkgs.map(p => ({
-      // kalau backend expect id "price_id"
-      price_id: String(p.id || "").startsWith("new_") ? null : (p.price_id ?? p.id),
+const normalizePackagesForApi = (pkgs, productId) =>
+  pkgs.map((p, idx) => {
+    const rawId = p.price_id ?? p.id ?? null;
+    const isNew = String(rawId || "").startsWith("new_") || rawId === null;
 
-      sku: p.sku ?? null,
+    const provider = p.provider ?? null;
+    const provider_variation_id = p.provider_variation_id ?? null;
+
+    // sku consistent, for backend purpose
+    const sku =
+      p.sku ||
+      (provider && provider_variation_id ? `${provider}_${provider_variation_id}` : null) ||
+      `manual_${productId}_${idx}_${Date.now()}`;
+
+    return {
+      price_id: isNew ? null : Number(rawId),
+      sku,
       item_label: p.item_label ?? p.name ?? "",
       item_amount: Number.isFinite(Number(p.item_amount)) ? Number(p.item_amount) : 1,
-
       price: Number(p.price || 0),
       original_price: Number(p.original_price ?? p.original ?? 0),
       cost_price: Number(p.cost_price || 0),
-
       is_active: p.is_active !== false,
-      provider: p.provider ?? null,
-      provider_variation_id: p.provider_variation_id ?? null,
-    }));
+      sort_order: Number(p.sort_order || 0),
+      provider,
+      provider_variation_id,
+    };
+  });
+
+
 
   return (
     <div className="min-h-screen bg-[#0B1D3A] pt-24 pb-12">
@@ -536,19 +549,25 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
                   let productId = editingGame?.product_id;
 
                   if (productId) {
-                    // CASE: Updating existing product
+                    // UPDATE existing product (already supports validation fields)
                     await updateProduct(productId, details);
                   } else {
-                    // CASE: Creating brand new product
+                    // CREATE new product (backend create ignores validation fields)
                     const created = await createProduct(details);
-                    // Ensure we grab the ID from the correct response structure
                     productId = created.data?.product_id || created.product_id;
+
+                    // ✅ PATCH validation fields right after create
+                    await updateProduct(productId, {
+                      requires_validation: details.requires_validation,
+                      validation_provider: details.validation_provider,
+                      validation_game_code: details.validation_game_code,
+                    });
                   }
 
-                  // Now that we definitely have a productId (old or new), save the packages
-                  await updatePackages(productId, pkgs);
+                  // Save packages after product exists
+                  await updatePackages(productId, normalizePackagesForApi(pkgs, productId));
 
-                  // Refresh the list
+                  // Refresh list
                   const refreshed = await getAdminProducts();
                   setGames(refreshed);
 
@@ -558,6 +577,7 @@ const AdminDashboard = ({ games, setGames, onLogout }) => {
                   throw err;
                 }
               }}
+
 
               onSyncSupplier={async ({ productId, markupPercent, preview }) => {
                 const res = await syncSupplierPriceCards(productId, markupPercent, preview);
