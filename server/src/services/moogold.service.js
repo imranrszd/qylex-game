@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const MOOGOLD_BASE = "https://moogold.com/wp-json/v1/api";
+const MOOGOLD_BASE_URL = "https://moogold.com/wp-json/v1/api";
 
 function makeBasicAuth(partnerId, secretKey) {
   const token = Buffer.from(`${partnerId}:${secretKey}`).toString("base64");
@@ -16,6 +16,7 @@ function signRequest({ payloadString, timestamp, path, secretKey }) {
 function getCreds() {
   const partnerId = process.env.MOOGOLD_PARTNER_ID;
   const secretKey = process.env.MOOGOLD_SECRET_KEY;
+
 
   if (!partnerId || !secretKey) {
     const err = new Error("MOOGOLD env not set (MOOGOLD_PARTNER_ID / MOOGOLD_SECRET_KEY)");
@@ -46,13 +47,13 @@ function stableStringify(obj) {
 async function moogoldPost(path, data) {
   const { partnerId, secretKey } = getCreds();
 
-  const body = { path, data };
+  const body = { path, ...data };
   const payloadString = stableStringify(body);
   const timestamp = Math.floor(Date.now() / 1000).toString();
 
   const auth = signRequest({ payloadString, timestamp, path, secretKey });
 
-  const res = await fetch(`${MOOGOLD_BASE}/${path}`, {
+  const res = await fetch(`${MOOGOLD_BASE_URL}/${path}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -66,7 +67,13 @@ async function moogoldPost(path, data) {
   const json = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const err = new Error(json?.message || "MooGold request failed");
+    const msg =
+      json?.message ||
+      json?.data?.err_message ||
+      json?.data?.message ||
+      "MooGold request failed";
+
+    const err = new Error(msg);
     err.status = res.status;
     err.raw = json;
     throw err;

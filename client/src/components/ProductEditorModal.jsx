@@ -17,7 +17,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
     platform: product?.platform || 'mobile',
     type: product?.type || 'topup',
     image_url: product?.image_url || '',
-    provider: product?.provider || 'mooGold', // Supplier Settings
+    provider: product?.provider || 'moogold', // Supplier Settings
     provider_product_id: product?.provider_product_id || '',      // Supplier Product ID
     markupPercent: 20,
     requires_validation: product?.requires_validation || false,
@@ -105,9 +105,19 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
 
   const handlePackageChange = (index, field, value) => {
     const updated = [...packages];
-    updated[index] = { ...updated[index], [field]: field === 'price' || field === 'original' ? parseFloat(value) : value };
+
+    const numFields = new Set(["price", "original", "cost_price", "sort_order"]);
+
+    updated[index] = {
+      ...updated[index],
+      [field]: numFields.has(field)
+        ? (value === "" ? "" : Number(value))
+        : value
+    };
+
     setPackages(updated);
   };
+
 
   const handleAddNewPackage = () => {
     setPackages([...packages, { id: `new_${Date.now()}`, name: "New Package", price: 0, original: 0, bonus: "x0" }]);
@@ -133,9 +143,10 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
 
     try {
       const rows = await onSyncSupplier({
-        productId: product.product_id,
+        provider_product_id: Number(details.provider_product_id),
+        productId: Number(product.product_id),
         markupPercent: details.markupPercent,
-        preview: true   // important flag
+        preview: true 
       });
 
       // Just update UI (no DB write)
@@ -151,7 +162,13 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
           sort_order: 0
         }))
       );
-
+      console.log("sync payload", {
+  productId: product.product_id,
+  provider: details.provider,
+  provider_product_id: details.provider_product_id,
+  markupPercent: details.markupPercent,
+  preview: true
+});
       setIsPreviewMode(true);
       setActiveTab("packages");
 
