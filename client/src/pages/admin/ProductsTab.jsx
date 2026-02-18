@@ -4,13 +4,10 @@ import EditPackagesModal from "../../components/EditPackageModal";
 import {
   INITIAL_PACKAGES
 } from '../../data/Packages';
-import ProductEditorModal from "../../components/ProductEditorModal";
 
 const ProductsTab = ({ games, setGames, onEdit, onDelete, onDisable, onEnable }) => {
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [editingGame, setEditingGame] = useState(null);
-  const [productPackages, setProductPackages] = useState(INITIAL_PACKAGES);
 
   return (
     <>

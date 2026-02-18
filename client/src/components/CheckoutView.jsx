@@ -667,7 +667,7 @@ const CheckoutView = ({ games }) => {
                         return card ? (
                           <div key={priceId} className="flex justify-between text-sm items-center">
                             <span className="text-slate-300">
-                              {card.item_amount} Item <span className="text-cyan-400 font-bold ml-1">x{qty}</span>
+                              {card.item_label} <span className="text-cyan-400 font-bold ml-1">x{qty}</span>
                             </span>
                             <span className="text-white font-medium">
                               RM {(Number(card.price) * qty).toFixed(2)}

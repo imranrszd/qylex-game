@@ -88,6 +88,8 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       validation_provider: product.validation_provider || "",
       validation_game_code: product.validation_game_code || "",
     });
+
+    console.log("validation:", product.requires_validation);
   }, [product]);
 
   const cleanPackageName = (rawName) => {
@@ -145,7 +147,7 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
         provider_product_id: Number(details.provider_product_id),
         productId: Number(product.product_id),
         markupPercent: details.markupPercent,
-        preview: true 
+        preview: true
       });
 
       // Just update UI (no DB write)
@@ -162,12 +164,12 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
         }))
       );
       console.log("sync payload", {
-  productId: product.product_id,
-  provider: details.provider,
-  provider_product_id: details.provider_product_id,
-  markupPercent: details.markupPercent,
-  preview: true
-});
+        productId: product.product_id,
+        provider: details.provider,
+        provider_product_id: details.provider_product_id,
+        markupPercent: details.markupPercent,
+        preview: true
+      });
       setIsPreviewMode(true);
       setActiveTab("packages");
 

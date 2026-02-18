@@ -85,7 +85,7 @@ async function createProduct(data) {
   try {
 
     const { rows } = await pool.query(
-    `
+      `
     INSERT INTO products
       (title, slug, image_url, publisher, category, type, platform,
        provider, provider_product_id,
@@ -99,22 +99,22 @@ async function createProduct(data) {
       requires_validation, validation_provider, validation_game_code,
       is_active
     `,
-    [
-      title,
-      slug,
-      image_url,
-      publisher,
-      category,
-      type,
-      platform,
-      provider,
-      provider_product_id,
-      reqVal,
-      reqVal ? validation_provider : null,
-      reqVal ? validation_game_code : null,
-      is_active,
-    ]
-  );
+      [
+        title,
+        slug,
+        image_url,
+        publisher,
+        category,
+        type,
+        platform,
+        provider,
+        provider_product_id,
+        reqVal,
+        reqVal ? validation_provider : null,
+        reqVal ? validation_game_code : null,
+        is_active,
+      ]
+    );
 
     return rows[0];
   } catch (err) {
@@ -302,7 +302,8 @@ async function enableProduct(id) {
 // list semua product sebab nak functionkan enable dgn disable
 async function listAllProducts() {
   const { rows } = await pool.query(`
-    SELECT product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active
+    SELECT product_id, title, slug, image_url, publisher, category, type, platform, provider, provider_product_id, is_active, 
+      requires_validation, validation_provider, validation_game_code
     FROM products
     ORDER BY created_at DESC
   `);
