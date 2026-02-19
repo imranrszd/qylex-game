@@ -106,6 +106,7 @@ exports.telegramWebhook = async (req, res) => {
     }
 
     console.log("✅ Telegram action done:", { orderId, action, result });
+    console.dir(result.supplier_results, { depth: null });
   } catch (e) {
     console.error("❌ Telegram webhook handler failed:", e.message);
   }

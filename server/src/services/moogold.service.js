@@ -44,15 +44,19 @@ function stableStringify(obj) {
   return JSON.stringify(sorter(obj));
 }
 
-async function moogoldPost(path, data) {
+async function moogoldPost(path, data, partnerOrderId) {
   const { partnerId, secretKey } = getCreds();
 
-  const body = { path, ...data };
+  const body = {
+    path,
+    data,                
+    ...(partnerOrderId ? { partnerOrderId } : {}),
+  };
   const payloadString = stableStringify(body);
   const timestamp = Math.floor(Date.now() / 1000).toString();
-
   const auth = signRequest({ payloadString, timestamp, path, secretKey });
-
+  console.log("FINAL MOO PAYLOAD:", payloadString);
+  
   const res = await fetch(`${MOOGOLD_BASE_URL}/${path}`, {
     method: "POST",
     headers: {
@@ -67,12 +71,7 @@ async function moogoldPost(path, data) {
   const json = await res.json().catch(() => ({}));
 
   if (!res.ok) {
-    const msg =
-      json?.message ||
-      json?.data?.err_message ||
-      json?.data?.message ||
-      "MooGold request failed";
-
+    const msg = json?.message || json?.data?.err_message || json?.data?.message || "MooGold request failed";
     const err = new Error(msg);
     err.status = res.status;
     err.raw = json;
@@ -91,18 +90,20 @@ async function productDetail(moogoldProductId) {
 }
 
 // Create order (used for Approve Auto)
-async function createOrder({ variationId, quantity, fields = {} }) {
+async function createOrder({ variationId, quantity, category, partnerOrderId, fields = {} }) {
   const path = "order/create_order";
 
-  // category: 1 = Direct Top Up (as per docs)
+  // Use the category from DB (1 or 2), default to 1
+  const validCategory = category ? Number(category) : 1;
+
   const data = {
-    category: 1,
+    category: Number(category ?? 1),
     "product-id": Number(variationId),
     quantity: Number(quantity),
-    ...fields, // dynamic fields: "User ID", "Server", etc.
+    ...fields, // fields will contain "User ID" and "Server"
   };
 
-  return moogoldPost(path, data);
+  return moogoldPost(path, data, partnerOrderId);
 }
 
 // Normalize variations list

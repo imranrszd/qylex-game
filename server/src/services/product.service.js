@@ -60,7 +60,7 @@ async function getProductBySlug(slug) {
 }
 
 async function createProduct(data) {
-  const {
+ const {
     title,
     slug,
     image_url = null,
@@ -75,6 +75,8 @@ async function createProduct(data) {
     validation_provider = null,
     validation_game_code = null,
   } = data;
+
+  const reqVal = Boolean(requires_validation);
 
   if (!title || !slug || !publisher) {
     const e = new Error("title, slug, publisher are required !");
@@ -118,13 +120,19 @@ async function createProduct(data) {
 
     return rows[0];
   } catch (err) {
-    if (err.code === "23505") {
-      const e = new Error("Slug already exists");
-      e.status = 409;
-      throw e;
-    }
-    throw err;
+  console.log("PG ERROR", {
+    code: err.code,
+    constraint: err.constraint,
+    detail: err.detail,
+  });
+
+  if (err.code === "23505") {
+    const e = new Error(`Unique constraint failed: ${err.constraint || "unknown"}`);
+    e.status = 409;
+    throw e;
   }
+  throw err;
+}
 }
 
 async function updateProduct(id, data) {
@@ -348,25 +356,37 @@ async function upsertPriceCard(productId, provider, variation, opts = {}) {
 
     const sellingPrice = calcSellingPrice(variation.cost_price, markupPercent);
 
-    const { rows } = await pool.query(
-      `
-        UPDATE price_cards
-        SET cost_price = $1,
-            price = $2,
-            is_active = $3,
-            item_label = $4,
-            updated_at = NOW()
-        WHERE price_id = $5
-        RETURNING *
-        `,
-      [
-        Number(variation.cost_price),
-        sellingPrice,
-        variation.stock_status === "instock",
-        variation.name,
-        existingPriceId,
-      ]
-    );
+   const { rowCount } = await pool.query(
+  `
+  UPDATE price_cards
+  SET sku = $1,
+      item_amount = $2,
+      item_label = $3,
+      price = $4,
+      original_price = $5,
+      cost_price = $6,
+      provider = $7,
+      provider_variation_id = $8,
+      is_active = $9,
+      sort_order = $10,
+      updated_at = NOW()
+  WHERE price_id = $11 AND product_id = $12
+  `,
+  [
+    payload.sku,
+    payload.item_amount,
+    payload.item_label,
+    payload.price,
+    payload.original_price,
+    payload.cost_price,
+    payload.provider,
+    payload.provider_variation_id,
+    payload.is_active,
+    payload.sort_order,
+    priceId,
+    productId,
+  ]
+);
 
     return { row: rows[0], action: "updated" };
   }
@@ -436,7 +456,9 @@ async function syncSupplierPriceCards(productId, opts = {}) {
 
   if (provider === "moogold") {
     const raw = await productDetail(product.provider_product_id);
+    console.log("MOO RAW", raw); // <-- add
     variations = normalizeProductDetailToVariations(raw);
+    console.log("VARIATIONS LEN", variations.length); // <-- add
   } else {
     const err = new Error(`Unsupported provider: ${product.provider}`);
     err.status = 400;
@@ -446,20 +468,21 @@ async function syncSupplierPriceCards(productId, opts = {}) {
   // ✅ BUILD preview rows (calculate markup but DO NOT write)
   const previewRows = variations.map(v => {
     const cost = Number(v.cost_price || 0);
-    const price = cost + (cost * (markupPercent / 100));
+    const price = calcSellingPrice(cost, markupPercent);
 
     return {
       product_id: product.product_id,
       provider,
-      sku: v.sku,
-      item_label: v.item_label,
+      sku: `${provider}_${v.provider_variation_id}`,
+      item_label: v.item_label ?? v.name ?? "",
       cost_price: cost,
-      price: price,
-      original_price: price,
+      price,
+      original_price: null,
       provider_variation_id: v.provider_variation_id,
       is_active: true
     };
-  });
+  }
+);
 
   // 🚨 STOP HERE if preview
   if (preview) {
@@ -543,18 +566,20 @@ async function updateProductPackages(productId, packages) {
     if (priceId) {
       const { rowCount } = await pool.query(
         `
-      UPDATE price_cards
-      SET sku = $1,
-          item_amount = $2,
-          item_label = $3,
-          price = $4,
-          original_price = $5,
-          cost_price = $6,
-          is_active = $7,
-          sort_order = $8,
-          updated_at = NOW()
-      WHERE price_id = $9 AND product_id = $10
-      `,
+        UPDATE price_cards
+        SET sku = $1,
+            item_amount = $2,
+            item_label = $3,
+            price = $4,
+            original_price = $5,
+            cost_price = $6,
+            provider = $7,
+            provider_variation_id = $8,
+            is_active = $9,
+            sort_order = $10,
+            updated_at = NOW()
+        WHERE price_id = $11 AND product_id = $12
+        `,
         [
           payload.sku,
           payload.item_amount,
@@ -562,6 +587,8 @@ async function updateProductPackages(productId, packages) {
           payload.price,
           payload.original_price,
           payload.cost_price,
+          payload.provider,
+          payload.provider_variation_id,
           payload.is_active,
           payload.sort_order,
           priceId,
@@ -579,23 +606,29 @@ async function updateProductPackages(productId, packages) {
     if (payload.sku) {
       const { rowCount } = await pool.query(
         `
-      UPDATE price_cards
-      SET item_amount = $1,
-          item_label = $2,
-          price = $3,
-          original_price = $4,
-          cost_price = $5,
-          is_active = $6,
-          updated_at = NOW()
-      WHERE sku = $7 AND product_id = $8
-      `,
+        UPDATE price_cards
+        SET item_amount = $1,
+            item_label = $2,
+            price = $3,
+            original_price = $4,
+            cost_price = $5,
+            provider = $6,
+            provider_variation_id = $7,
+            is_active = $8,
+            sort_order = $9,
+            updated_at = NOW()
+        WHERE sku = $10 AND product_id = $11
+        `,
         [
           payload.item_amount,
           payload.item_label,
           payload.price,
           payload.original_price,
           payload.cost_price,
+          payload.provider,
+          payload.provider_variation_id,
           payload.is_active,
+          payload.sort_order,
           payload.sku,
           productId,
         ]

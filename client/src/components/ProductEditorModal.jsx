@@ -151,14 +151,16 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
       // Just update UI (no DB write)
       setPackages(
         rows.map((r, index) => ({
-          id: null, // ✅ important
-          name: cleanPackageName(r.item_label) || r.provider_variation_id || `Package ${index + 1}`,
+          id: null,
+          name: cleanPackageName(r.item_label) || `Package ${index + 1}`,
           sku: `${details.provider}_${r.provider_variation_id}`,
+          provider: details.provider,
+          provider_variation_id: String(r.provider_variation_id), // ✅ important
           price: Number(r.price || 0),
           original: Number(r.original_price || 0),
           cost_price: Number(r.cost_price || 0),
           is_active: true,
-          sort_order: 0
+          sort_order: 0,
         }))
       );
       console.log("sync payload", {
@@ -274,7 +276,23 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                   </div>
                   <div>
                     <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Type</label>
-                    <select value={details.type} onChange={(e) => setDetails({ ...details, type: e.target.value })} className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm">
+                    <select
+                      value={details.type}
+                      onChange={(e) => {
+                        const newType = e.target.value;
+
+                        setDetails({
+                          ...details,
+                          type: newType,
+                          ...(newType !== "topup"
+                            ? {
+                                provider: null,
+                                provider_product_id: "",
+                              }
+                            : {}),
+                        });
+                      }} 
+                      className="w-full bg-black border border-[#282442] rounded-lg px-3 py-2 text-white text-sm">
                       <option value="topup">Direct ID</option>
                       <option value="login">Login Method</option>
                       <option value="joki">Joki</option>
@@ -313,14 +331,27 @@ const ProductEditorModal = ({ product, currentPackages, onSave, onClose, onSyncS
                 <div className="bg-[#0a0913] p-4 rounded-xl border border-[#282442]">
                   <div className="grid grid-cols-2 gap-4 mb-4">
                     <div>
-                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Provider</label>
-                      <select value={details.provider} onChange={(e) => setDetails({ ...details, provider: e.target.value })} className="w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm">
+                      <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">
+                        Provider
+                      </label>
+                      <select
+                        value={details.provider || ""}
+                        disabled={details.type !== "topup"}
+                        onChange={(e) =>
+                          setDetails({ ...details, provider: e.target.value })
+                        }
+                        className={`w-full bg-[#131122] border border-[#282442] rounded-lg px-3 py-2 text-white text-sm
+                          ${details.type !== "topup" ? "opacity-50 cursor-not-allowed" : ""}
+                        `}
+                      >
+                        <option value="">Select Provider</option>
                         <option value="moogold">MooGold</option>
                         <option value="smile.one">Smile.One</option>
                         <option value="lapakgaming">LapakGaming</option>
                         <option value="apigames">Apigames</option>
                       </select>
                     </div>
+
                     <div>
                       <label className="block text-xs text-slate-400 mb-1 uppercase tracking-wider">Provider Product ID</label>
                       <div className="flex gap-2">

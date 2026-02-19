@@ -74,21 +74,23 @@ router.post("/orders/:orderId/approve", requireAdmin, async (req, res, next) => 
         // Create fulfillment row first (audit)
         const fIns = await client.query(
             `INSERT INTO order_fulfillments (order_id, provider_id, status, attempt_count, created_at, updated_at, request_payload)
-            VALUES ($1, (SELECT provider_id FROM providers WHERE name='moogold'), 'SENT', 1, NOW(), NOW(), $2)
+            VALUES ($1, NULL, 'SENT', 1, NOW(), NOW(), $2)
             RETURNING fulfillment_id`,
-            [orderId, JSON.stringify({ playerId: order.player_id, serverId })]
+           [orderId, JSON.stringify({ provider: "moogold", playerId: order.player_id, serverId })]
         );
 
         const partnerOrderId = `QYLX-${orderId}`; // helps prevent duplicates; supported in docs :contentReference[oaicite:11]{index=11}
 
         // Call MooGold create order: /order/create_order :contentReference[oaicite:12]{index=12}
         const mooRes = await createOrder({
-            category: order.provider_category,          // 1 or 2 :contentReference[oaicite:13]{index=13}
-            variationId: order.provider_variation_id,   // "product-id" (variation_id) :contentReference[oaicite:14]{index=14}
-            quantity: 1,
-            userId: order.player_id,                   // "User ID" field :contentReference[oaicite:15]{index=15}
-            server: order.requires_server ? (serverId || null) : null,
-            partnerOrderId,
+        category: order.provider_category,
+        variationId: order.provider_variation_id,
+        quantity: 1,
+        partnerOrderId,
+        fields: {
+            "User ID": String(order.player_id).trim(),
+            ...(order.requires_server ? { Server: String(serverId || "").trim() } : {}),
+        },
         });
 
         // Save provider response

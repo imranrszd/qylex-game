@@ -548,26 +548,40 @@ const normalizePackagesForApi = (pkgs, productId) =>
                 try {
                   let productId = editingGame?.product_id;
 
+                  // ✅ only topup requires supplier
+                  const isTopup = details.type === "topup";
+
+                  // treat "" / null / undefined as null
+                  const pidRaw = details.provider_product_id;
+                  const pidNum = pidRaw === "" || pidRaw == null ? null : Number(pidRaw);
+
+                  if (isTopup && (!pidNum || !Number.isFinite(pidNum) || pidNum <= 0)) {
+                    alert("Topup product requires Provider Product ID (supplier).");
+                    return;
+                  }
+
+                  const payload = {
+                    ...details,
+                    provider_product_id: isTopup ? pidNum : null,
+                    provider: isTopup ? details.provider : null,
+                  };
+
                   if (productId) {
-                    // UPDATE existing product (already supports validation fields)
-                    await updateProduct(productId, details);
+                    await updateProduct(productId, payload);
                   } else {
-                    // CREATE new product (backend create ignores validation fields)
-                    const created = await createProduct(details);
+                    const created = await createProduct(payload);
                     productId = created.data?.product_id || created.product_id;
 
-                    // ✅ PATCH validation fields right after create
+                    // keep this (safe)
                     await updateProduct(productId, {
-                      requires_validation: details.requires_validation,
-                      validation_provider: details.validation_provider,
-                      validation_game_code: details.validation_game_code,
+                      requires_validation: payload.requires_validation,
+                      validation_provider: payload.validation_provider,
+                      validation_game_code: payload.validation_game_code,
                     });
                   }
 
-                  // Save packages after product exists
                   await updatePackages(productId, normalizePackagesForApi(pkgs, productId));
 
-                  // Refresh list
                   const refreshed = await getAdminProducts();
                   setGames(refreshed);
 
@@ -578,11 +592,21 @@ const normalizePackagesForApi = (pkgs, productId) =>
                 }
               }}
 
+             onSyncSupplier={async ({ productId, markupPercent, preview }) => {
+  const res = await syncSupplierPriceCards(
+    Number(productId),
+    Number(markupPercent),
+    Boolean(preview)
+  );
 
-              onSyncSupplier={async ({ productId, markupPercent, preview }) => {
-                const res = await syncSupplierPriceCards(productId, markupPercent, preview);
-                return res.data;   // ✅ return array only
-              }}
+  if (!Array.isArray(res?.data)) {
+    console.log("SYNC unexpected response", res);
+    throw new Error("Sync failed: backend did not return preview rows array");
+  }
+
+  return res.data;
+}}
+
               onLoadPackages={async (productId) => {
                 const latest = await getProductPackages(productId);
                 return latest;
