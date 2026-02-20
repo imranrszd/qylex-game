@@ -44,14 +44,16 @@ function stableStringify(obj) {
   return JSON.stringify(sorter(obj));
 }
 
-async function moogoldPost(path, data, partnerOrderId) {
+async function moogoldPost(path, data, partnerOrderId, rawBody = null) {
   const { partnerId, secretKey } = getCreds();
 
-  const body = {
-    path,
-    data,                
-    ...(partnerOrderId ? { partnerOrderId } : {}),
-  };
+   const body = rawBody
+    ? { path, ...rawBody }
+    : {
+        path,
+        data,
+        ...(partnerOrderId ? { partnerOrderId } : {}),
+      };
   const payloadString = stableStringify(body);
   const timestamp = Math.floor(Date.now() / 1000).toString();
   const auth = signRequest({ payloadString, timestamp, path, secretKey });
@@ -77,7 +79,7 @@ async function moogoldPost(path, data, partnerOrderId) {
     err.raw = json;
     throw err;
   }
-
+console.log("RAW MOO RESPONSE:", JSON.stringify(json, null, 2));
   return json;
 }
 
@@ -86,7 +88,13 @@ async function moogoldPost(path, data, partnerOrderId) {
 // Product detail (used to fetch variations)
 async function productDetail(moogoldProductId) {
   const path = "product/product_detail";
-  return moogoldPost(path, { product_id: Number(moogoldProductId) });
+
+  return moogoldPost(
+    path,
+    null,
+    null,
+    { product_id: Number(moogoldProductId) }
+  );
 }
 
 // Create order (used for Approve Auto)
